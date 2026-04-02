@@ -16,7 +16,7 @@ return new class extends Migration
                   ->default('pending');
             $table->enum('winner', ['meron', 'wala', 'draw', 'cancelled'])
                   ->nullable();
-            $table->decimal('commission_rate', 5, 2)->default(10.00);
+            $table->decimal('commission_rate', 5, 2)->default(5.00);
             $table->timestamps();
         });
     }

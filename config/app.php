@@ -123,4 +123,20 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | QR Code Generator
+    |--------------------------------------------------------------------------
+    |
+    | This package allows you to generate QR codes easily. You can use this
+    | service to generate QR codes on the fly in your application.
+    |
+    |
+    | Supported drivers: "png", "eps", "pdf", "svg"
+    |
+    */
+
+    'QrCode' => SimpleSoftwareIO\QrCode\Facades\QrCode::class,
+
 ];

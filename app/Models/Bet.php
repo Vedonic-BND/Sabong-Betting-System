@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Bet extends Model
 {
@@ -14,6 +15,7 @@ class Bet extends Model
     protected $fillable = [
         'fight_id',
         'teller_id',
+        'reference',
         'side',
         'amount',
     ];
@@ -26,7 +28,16 @@ class Bet extends Model
         ];
     }
 
-    // ─── Relationships ───────────────────────────────
+    // ─── Auto generate reference ──────────────────────────
+
+    protected static function booted(): void
+    {
+        static::creating(function ($bet) {
+            $bet->reference = strtoupper(Str::random(3)) . '-' . random_int(100000, 999999);
+        });
+    }
+
+    // ─── Relationships ────────────────────────────────────
 
     public function fight()
     {

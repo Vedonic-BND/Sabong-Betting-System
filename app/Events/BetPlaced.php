@@ -31,11 +31,15 @@ class BetPlaced implements ShouldBroadcast
 
     public function broadcastWith(): array
     {
+        $fight = $this->bet->fight;
+
         return [
-            'fight_id'  => $this->bet->fight_id,
-            'side'      => $this->bet->side,
-            'amount'    => $this->bet->amount,
-            'teller'    => $this->bet->teller->name ?? '—',
+            'fight_id'    => $this->bet->fight_id,
+            'side'        => $this->bet->side,
+            'amount'      => $this->bet->amount,
+            'teller'      => $this->bet->teller->name ?? '—',
+            'meron_total' => $fight->meronTotal(),
+            'wala_total'  => $fight->walaTotal(),
         ];
     }
 }

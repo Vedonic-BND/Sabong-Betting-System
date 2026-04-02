@@ -56,59 +56,91 @@
 
 @push('scripts')
 <script>
-    // WebSocket status indicator
-    window.Echo.connector.pusher.connection.bind('connected', () => {
-        const status = document.getElementById('ws-status');
-        status.textContent = '● Live';
-        status.className = 'text-xs px-3 py-1 rounded-full bg-green-100 text-green-700';
-    });
+document.addEventListener('DOMContentLoaded', function () {
 
-    window.Echo.connector.pusher.connection.bind('disconnected', () => {
-        const status = document.getElementById('ws-status');
-        status.textContent = '● Disconnected';
-        status.className = 'text-xs px-3 py-1 rounded-full bg-red-100 text-red-700';
-    });
-
-    function addFeedItem(message, color = 'text-gray-700') {
-        const feed = document.getElementById('live-feed');
-
-        // remove placeholder
-        const placeholder = feed.querySelector('.text-center');
-        if (placeholder) placeholder.remove();
-
-        const time = new Date().toLocaleTimeString();
-        const li = document.createElement('li');
-        li.className = 'px-6 py-3 text-sm flex justify-between items-center';
-        li.innerHTML = `
-            <span class="${color}">${message}</span>
-            <span class="text-xs text-gray-400">${time}</span>
-        `;
-
-        feed.prepend(li);
+    function waitForEcho(callback) {
+        if (typeof window.Echo !== 'undefined') {
+            callback();
+        } else {
+            setTimeout(() => waitForEcho(callback), 100);
+        }
     }
 
-    // Listen for fight updates
-    window.Echo.channel('fights')
-        .listen('.fight.updated', (data) => {
-            addFeedItem(
-                `Fight #${data.fight_number} status changed to <strong>${data.status}</strong>`,
-                'text-yellow-700'
-            );
-        })
-        .listen('.bet.placed', (data) => {
-            addFeedItem(
-                `New bet — <strong>${data.side.toUpperCase()}</strong>
-                 ₱${parseFloat(data.amount).toLocaleString()}
-                 by ${data.teller}`,
-                'text-blue-700'
-            );
-        })
-        .listen('.winner.declared', (data) => {
-            addFeedItem(
-                `🏆 Fight #${data.fight_number} — Winner: <strong>${data.winner.toUpperCase()}</strong>`,
-                'text-green-700'
-            );
+    waitForEcho(function () {
+
+        // ── WebSocket status ──────────────────────────
+        window.Echo.connector.pusher.connection.bind('connected', () => {
+            const s = document.getElementById('ws-status');
+            s.textContent = '● Live';
+            s.className   = 'text-xs px-3 py-1 rounded-full bg-green-100 text-green-700';
         });
+
+        window.Echo.connector.pusher.connection.bind('disconnected', () => {
+            const s = document.getElementById('ws-status');
+            s.textContent = '● Disconnected';
+            s.className   = 'text-xs px-3 py-1 rounded-full bg-red-100 text-red-700';
+        });
+
+        // ── Listen for events ─────────────────────────
+        window.Echo.channel('fights')
+            .listen('.fight.updated', (data) => {
+                addFeedItem(
+                    `Fight #${data.fight_number} status changed to <strong>${data.status}</strong>`,
+                    'text-yellow-700'
+                );
+                // refresh total fights count
+                fetch('/owner/stats')
+                    .then(r => r.json())
+                    .then(stats => {
+                        document.getElementById('total-fights').textContent =
+                            stats.total_fights;
+                        document.getElementById('total-bets').textContent =
+                            '₱' + parseFloat(stats.total_bets).toLocaleString('en-PH', {
+                                minimumFractionDigits: 2
+                            });
+                    });
+            })
+            .listen('.bet.placed', (data) => {
+                addFeedItem(
+                    `New bet — <strong>${data.side.toUpperCase()}</strong>
+                     ₱${parseFloat(data.amount).toLocaleString()}
+                     by ${data.teller}`,
+                    'text-blue-700'
+                );
+                // update total bets
+                fetch('/owner/stats')
+                    .then(r => r.json())
+                    .then(stats => {
+                        document.getElementById('total-bets').textContent =
+                            '₱' + parseFloat(stats.total_bets).toLocaleString('en-PH', {
+                                minimumFractionDigits: 2
+                            });
+                    });
+            })
+            .listen('.winner.declared', (data) => {
+                addFeedItem(
+                    `🏆 Fight #${data.fight_number} — Winner: <strong>${data.winner.toUpperCase()}</strong>`,
+                    'text-green-700'
+                );
+            });
+
+        function addFeedItem(message, color = 'text-gray-700') {
+            const feed = document.getElementById('live-feed');
+            const placeholder = feed.querySelector('.text-center');
+            if (placeholder) placeholder.remove();
+
+            const time = new Date().toLocaleTimeString();
+            const li   = document.createElement('li');
+            li.className = 'px-6 py-3 text-sm flex justify-between items-center';
+            li.innerHTML = `
+                <span class="${color}">${message}</span>
+                <span class="text-xs text-gray-400">${time}</span>
+            `;
+            feed.prepend(li);
+        }
+
+    }); // end waitForEcho
+});
 </script>
 @endpush
 

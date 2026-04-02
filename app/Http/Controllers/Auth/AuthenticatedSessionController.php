@@ -31,7 +31,7 @@ class AuthenticatedSessionController extends Controller
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
-            return redirect('/login')->withErrors([
+            return redirect('/manage')->withErrors([
                 'username' => 'Access restricted. Owner only.',
             ]);
         }
@@ -46,6 +46,6 @@ class AuthenticatedSessionController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/login');
+        return redirect('/manage');
     }
 }
