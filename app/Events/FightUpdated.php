@@ -32,12 +32,14 @@ class FightUpdated implements ShouldBroadcast
     public function broadcastWith(): array
     {
         return [
-            'id'          => $this->fight->id,
-            'fight_number'=> $this->fight->fight_number,
-            'status'      => $this->fight->status,
-            'winner'      => $this->fight->winner,
-            'meron_total' => $this->fight->meronTotal(),
-            'wala_total'  => $this->fight->walaTotal(),
+            'id'           => $this->fight->id,
+            'fight_number' => $this->fight->fight_number,
+            'status'       => $this->fight->status,
+            'meron_status' => $this->fight->meron_status,
+            'wala_status'  => $this->fight->wala_status,
+            'winner'       => $this->fight->winner,
+            'meron_total'  => $this->fight->meronTotal(),
+            'wala_total'   => $this->fight->walaTotal(),
         ];
     }
 }

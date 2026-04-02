@@ -6,23 +6,22 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::table('fights', function (Blueprint $table) {
-            //
+            $table->enum('meron_status', ['open', 'closed'])
+                  ->default('open')
+                  ->after('status');
+            $table->enum('wala_status', ['open', 'closed'])
+                  ->default('open')
+                  ->after('meron_status');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::table('fights', function (Blueprint $table) {
-            //
+            $table->dropColumn(['meron_status', 'wala_status']);
         });
     }
 };

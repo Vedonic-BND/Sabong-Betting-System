@@ -28,6 +28,8 @@ class FightController extends Controller
             'id'              => $fight->id,
             'fight_number'    => $fight->fight_number,
             'status'          => $fight->status,
+            'meron_status'    => $fight->meron_status,
+            'wala_status'     => $fight->wala_status,
             'winner'          => $fight->winner,
             'commission_rate' => $fight->commission_rate,
             'meron_total'     => (string) $fight->meronTotal(),
@@ -67,6 +69,19 @@ class FightController extends Controller
         ]);
 
         $fight->status = $request->status;
+
+        // when opening — reset both sides to open
+        if ($request->status === 'open') {
+            $fight->meron_status = 'open';
+            $fight->wala_status  = 'open';
+        }
+
+        // when closing all — close both sides
+        if ($request->status === 'closed') {
+            $fight->meron_status = 'closed';
+            $fight->wala_status  = 'closed';
+        }
+
         $fight->save();
 
         AuditLogger::log('updated_fight_status', 'fight', $fight->id, [
@@ -76,6 +91,58 @@ class FightController extends Controller
         broadcast(new FightUpdated($fight));
 
         return response()->json(['message' => 'Fight status updated.']);
+    }
+
+    // PUT /api/fight/{id}/side-status
+    public function updateSideStatus(Request $request, Fight $fight)
+    {
+        $request->validate([
+            'side'   => ['required', 'in:meron,wala'],
+            'status' => ['required', 'in:open,closed'],
+        ]);
+
+        if ($request->side === 'meron') {
+            $fight->meron_status = $request->status;
+        } else {
+            $fight->wala_status = $request->status;
+        }
+
+        $fight->save();
+
+        AuditLogger::log(
+            'updated_side_status',
+            'fight',
+            $fight->id,
+            [
+                'side'   => $request->side,
+                'status' => $request->status,
+            ]
+        );
+
+        broadcast(new FightUpdated($fight));
+
+        return response()->json(['message' => ucfirst($request->side) . ' status updated.']);
+    }
+
+    // POST /api/fight/{id}/finalize
+    public function finalizeBet(Fight $fight)
+    {
+        if ($fight->status !== 'open' && $fight->status !== 'closed') {
+            return response()->json([
+                'message' => 'Fight cannot be finalized.',
+            ], 422);
+        }
+
+        $fight->status       = 'closed';
+        $fight->meron_status = 'closed';
+        $fight->wala_status  = 'closed';
+        $fight->save();
+
+        AuditLogger::log('finalized_bet', 'fight', $fight->id);
+
+        broadcast(new FightUpdated($fight));
+
+        return response()->json(['message' => 'Betting finalized.']);
     }
 
     // POST /api/fight/{id}/winner

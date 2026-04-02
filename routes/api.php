@@ -36,7 +36,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/fight', [FightController::class, 'store']);
         Route::put('/fight/{fight}/status', [FightController::class, 'updateStatus']);
         Route::post('/fight/{fight}/winner', [FightController::class, 'declareWinner']);
+        Route::put('/fight/{fight}/side-status', [FightController::class, 'updateSideStatus']);
+        Route::post('/fight/{fight}/finalize', [FightController::class, 'finalizeBet']);
         Route::get('/fight/history', [FightController::class, 'history']);
+        Route::post('/bet', [BetController::class, 'store']);
     });
 
     /*

@@ -20,12 +20,22 @@ class BetController extends Controller
             'amount' => ['required', 'numeric', 'min:1'],
         ]);
 
-        // get current open fight
         $fight = Fight::where('status', 'open')->latest()->first();
 
         if (!$fight) {
             return response()->json([
                 'message' => 'No open fight available.',
+            ], 422);
+        }
+
+        // check side status
+        $sideStatus = $request->side === 'meron'
+            ? $fight->meron_status
+            : $fight->wala_status;
+
+        if ($sideStatus === 'closed') {
+            return response()->json([
+                'message' => ucfirst($request->side) . ' betting is closed.',
             ], 422);
         }
 

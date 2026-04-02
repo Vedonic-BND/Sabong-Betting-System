@@ -15,6 +15,8 @@ class Fight extends Model
         'created_by',
         'fight_number',
         'status',
+        'meron_status',
+        'wala_status',
         'winner',
         'commission_rate',
     ];
