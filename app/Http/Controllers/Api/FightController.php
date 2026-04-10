@@ -45,10 +45,26 @@ class FightController extends Controller
             'commission_rate' => ['sometimes', 'numeric', 'min:0', 'max:100'],
         ]);
 
+        // check if there's already an active fight
+        $activeFight = Fight::whereIn('status', ['pending', 'open', 'closed'])->first();
+
+        if ($activeFight) {
+            return response()->json([
+                'message' => 'There is already an active fight. Please finish it before creating a new one.',
+                'fight'   => [
+                    'id'           => $activeFight->id,
+                    'fight_number' => $activeFight->fight_number,
+                    'status'       => $activeFight->status,
+                ]
+            ], 422);
+        }
+
         $fight = Fight::create([
             'created_by'      => $request->user()->id,
             'fight_number'    => $request->fight_number,
             'status'          => 'pending',
+            'meron_status'    => 'open',
+            'wala_status'     => 'open',
             'commission_rate' => $request->commission_rate ?? 5.00,
         ]);
 
@@ -58,7 +74,17 @@ class FightController extends Controller
 
         broadcast(new FightUpdated($fight));
 
-        return response()->json($fight, 201);
+        return response()->json([
+            'id'              => $fight->id,
+            'fight_number'    => $fight->fight_number,
+            'status'          => $fight->status,
+            'meron_status'    => $fight->meron_status,
+            'wala_status'     => $fight->wala_status,
+            'winner'          => $fight->winner,
+            'commission_rate' => $fight->commission_rate,
+            'meron_total'     => (string) $fight->meronTotal(),
+            'wala_total'      => (string) $fight->walaTotal(),
+        ], 201);
     }
 
     // PUT /api/fight/{id}/status
