@@ -127,7 +127,7 @@ Create a new database for the application:
 
 ```bash
 # Using MySQL directly
-mysql -u root -p -e "CREATE DATABASE sabong_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+mysql -u root -p -e "CREATE DATABASE sabong_betting_system CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 ```
 
 ### Step 6: Run Migrations
@@ -165,14 +165,31 @@ yarn dev
 ### Step 9: Start the Application
 
 ```bash
-php artisan serve
+php artisan serve --host=0.0.0.0 --port=8000
 ```
 
-The application will be available at `http://localhost:8000`
+The application will be available at `http://<ip address of pc or localhost or 127.0.0.1>:8000`
 
-### Step 10: Access Owner Panel
+### Step 10: Start Reverb Broadcasting
+
+```bash
+php artisan reverb:start --host=0.0.0.0 --port=8080
+```
+
+### Step 11: Start Queue Work
+
+```bash
+php artisan queue:work
+```
+
+### Step 12: Access Owner Panel
 
 Navigate to `/manage` to access the owner login page.
+
+## Auto Start Setup
+
+https://www.youtube.com/watch?v=ah3syVwn0h0
+
 
 ## Project Structure
 
