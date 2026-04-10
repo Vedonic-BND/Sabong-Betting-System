@@ -5,78 +5,92 @@
 @section('content')
 
 <div class="flex justify-between items-center mb-6">
-    <h2 class="text-2xl font-bold text-gray-800">Audit Logs</h2>
+    <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Audit Logs</h2>
 </div>
 
 {{-- FILTER BAR --}}
-<div class="bg-white rounded-xl shadow p-4 mb-6">
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow p-4 mb-6">
+    <div class="flex flex-wrap gap-3 items-end">
     <form method="GET" action="{{ route('owner.audit-logs.index') }}"
         class="flex flex-wrap gap-3 items-end">
 
         <div>
-            <label class="block text-xs text-gray-500 mb-1">Search action</label>
+            <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Search action</label>
             <input type="text" name="action" value="{{ request('action') }}"
                 placeholder="e.g. created_user"
-                class="border border-gray-300 rounded-lg px-3 py-2 text-sm
-                       focus:outline-none focus:ring-2 focus:ring-gray-800" />
+                class="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg px-3 py-2 text-sm
+                       focus:outline-none focus:ring-2 focus:ring-gray-800 dark:focus:ring-gray-600" />
         </div>
 
         <div>
-            <label class="block text-xs text-gray-500 mb-1">User</label>
+            <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">User</label>
             <input type="text" name="user" value="{{ request('user') }}"
                 placeholder="Username"
-                class="border border-gray-300 rounded-lg px-3 py-2 text-sm
-                       focus:outline-none focus:ring-2 focus:ring-gray-800" />
+                class="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg px-3 py-2 text-sm
+                       focus:outline-none focus:ring-2 focus:ring-gray-800 dark:focus:ring-gray-600" />
         </div>
 
         <div>
-            <label class="block text-xs text-gray-500 mb-1">Date</label>
+            <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Date</label>
             <input type="date" name="date" value="{{ request('date') }}"
-                class="border border-gray-300 rounded-lg px-3 py-2 text-sm
-                       focus:outline-none focus:ring-2 focus:ring-gray-800" />
+                class="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg px-3 py-2 text-sm
+                       focus:outline-none focus:ring-2 focus:ring-gray-800 dark:focus:ring-gray-600" />
         </div>
 
         <button type="submit"
-            class="bg-gray-900 hover:bg-gray-700 text-white text-sm px-4 py-2 rounded-lg transition">
+            class="bg-gray-900 dark:bg-gray-700 hover:bg-gray-700 dark:hover:bg-gray-600 text-white text-sm px-4 py-2 rounded-lg transition">
             Filter
         </button>
 
         @if (request()->anyFilled(['action', 'user', 'date']))
             <a href="{{ route('owner.audit-logs.index') }}"
-                class="text-sm text-gray-400 hover:text-gray-600 px-2 py-2 transition">
+                class="text-sm text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400 px-2 py-2 transition">
                 Clear
             </a>
         @endif
 
     </form>
+
+    {{-- export button --}}
+    <a href="{{ route('owner.audit-logs.export', request()->query()) }}"
+        class="flex items-center gap-2 bg-green-600 hover:bg-green-700
+                text-white text-sm font-medium px-4 py-2 rounded-lg transition">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+            viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+        </svg>
+        Export CSV
+    </a>
+    </div>
 </div>
 
 {{-- TABLE --}}
-<div class="bg-white rounded-xl shadow overflow-hidden">
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow overflow-hidden">
     <table class="w-full text-sm">
-        <thead class="bg-gray-50 border-b border-gray-200">
+        <thead class="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
             <tr>
-                <th class="text-left px-6 py-3 text-gray-500 font-medium">Time</th>
-                <th class="text-left px-6 py-3 text-gray-500 font-medium">User</th>
-                <th class="text-left px-6 py-3 text-gray-500 font-medium">Action</th>
-                <th class="text-left px-6 py-3 text-gray-500 font-medium">Target</th>
-                <th class="text-left px-6 py-3 text-gray-500 font-medium">Details</th>
-                <th class="text-left px-6 py-3 text-gray-500 font-medium">IP Address</th>
+                <th class="text-left px-6 py-3 text-gray-500 dark:text-gray-400 font-medium">Time</th>
+                <th class="text-left px-6 py-3 text-gray-500 dark:text-gray-400 font-medium">User</th>
+                <th class="text-left px-6 py-3 text-gray-500 dark:text-gray-400 font-medium">Action</th>
+                <th class="text-left px-6 py-3 text-gray-500 dark:text-gray-400 font-medium">Target</th>
+                <th class="text-left px-6 py-3 text-gray-500 dark:text-gray-400 font-medium">Details</th>
+                <th class="text-left px-6 py-3 text-gray-500 dark:text-gray-400 font-medium">IP Address</th>
             </tr>
         </thead>
-        <tbody class="divide-y divide-gray-100">
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
             @forelse ($logs as $log)
-                <tr class="hover:bg-gray-50 transition">
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition">
 
-                    <td class="px-6 py-4 text-gray-500 whitespace-nowrap">
+                    <td class="px-6 py-4 text-gray-500 dark:text-gray-400 whitespace-nowrap">
                         {{ \Carbon\Carbon::parse($log->created_at)->format('M d, Y h:i A') }}
                     </td>
 
                     <td class="px-6 py-4">
-                        <span class="font-medium text-gray-800">
+                        <span class="font-medium text-gray-800 dark:text-white">
                             {{ $log->user->name ?? '—' }}
                         </span>
-                        <span class="text-xs text-gray-400 block">
+                        <span class="text-xs text-gray-400 dark:text-gray-500 block">
                             {{ $log->user->role ?? '' }}
                         </span>
                     </td>
@@ -97,37 +111,37 @@
                         </span>
                     </td>
 
-                    <td class="px-6 py-4 text-gray-600">
+                    <td class="px-6 py-4 text-gray-600 dark:text-gray-400">
                         @if ($log->target_type && $log->target_id)
                             {{ ucfirst($log->target_type) }} #{{ $log->target_id }}
                         @else
-                            <span class="text-gray-400">—</span>
+                            <span class="text-gray-400 dark:text-gray-500">—</span>
                         @endif
                     </td>
 
-                    <td class="px-6 py-4 text-gray-600 max-w-xs">
+                    <td class="px-6 py-4 text-gray-600 dark:text-gray-400 max-w-xs">
                         @if ($log->payload)
-                            <div class="text-xs text-gray-500 space-y-0.5">
+                            <div class="text-xs text-gray-500 dark:text-gray-400 space-y-0.5">
                                 @foreach ($log->payload as $key => $value)
                                     <div>
-                                        <span class="text-gray-400">{{ $key }}:</span>
+                                        <span class="text-gray-400 dark:text-gray-500">{{ $key }}:</span>
                                         {{ $value }}
                                     </div>
                                 @endforeach
                             </div>
                         @else
-                            <span class="text-gray-400">—</span>
+                            <span class="text-gray-400 dark:text-gray-500">—</span>
                         @endif
                     </td>
 
-                    <td class="px-6 py-4 text-gray-500 text-xs">
+                    <td class="px-6 py-4 text-gray-500 dark:text-gray-400 text-xs">
                         {{ $log->ip_address ?? '—' }}
                     </td>
 
                 </tr>
             @empty
                 <tr>
-                    <td colspan="6" class="px-6 py-8 text-center text-gray-400">
+                    <td colspan="6" class="px-6 py-8 text-center text-gray-400 dark:text-gray-500">
                         No audit logs found.
                     </td>
                 </tr>
@@ -137,7 +151,7 @@
 
     {{-- PAGINATION --}}
     @if ($logs->hasPages())
-        <div class="px-6 py-4 border-t border-gray-100">
+        <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-700">
             {{ $logs->links() }}
         </div>
     @endif

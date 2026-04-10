@@ -8,6 +8,8 @@ use App\Http\Controllers\Owner\FightController;
 use App\Http\Controllers\Owner\UserController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ReceiptController;
+use App\Http\Controllers\Owner\ExportController;
+use App\Http\Controllers\Owner\ProfileController;
 
 /*
 |--------------------------------------------------------------------------
@@ -27,11 +29,17 @@ Route::get('/receipt/{reference}', [ReceiptController::class, 'show'])
 |--------------------------------------------------------------------------
 */
 
-Route::middleware('guest')->group(function () {
-    Route::get('/manage', [AuthenticatedSessionController::class, 'create'])
-        ->name('login');
-    Route::post('/manage', [AuthenticatedSessionController::class, 'store']);
-});
+Route::get('/manage', function () {
+    // If user is authenticated, redirect to owner dashboard
+    if (auth()->check()) {
+        return redirect()->route('owner.dashboard');
+    }
+    // Otherwise show login form
+    return app(\App\Http\Controllers\Auth\AuthenticatedSessionController::class)->create();
+})->name('login');
+
+Route::post('/manage', [AuthenticatedSessionController::class, 'store'])
+    ->middleware('guest');
 
 Route::post('/manage/logout', [AuthenticatedSessionController::class, 'destroy'])
     ->middleware('auth')
@@ -56,7 +64,18 @@ Route::middleware(['auth', 'role:owner'])
         Route::resource('users', UserController::class)
             ->names('users');
 
-        // fights
+        // profile
+        Route::get('/profile', [ProfileController::class, 'show'])
+            ->name('profile.show');
+        Route::put('/profile', [ProfileController::class, 'update'])
+            ->name('profile.update');
+        Route::put('/profile/password', [ProfileController::class, 'updatePassword'])
+            ->name('profile.update-password');
+
+        // fights - export route must be before resource route
+        Route::get('/fights/export', [ExportController::class, 'fights'])
+            ->name('fights.export');
+
         Route::resource('fights', FightController::class)
             ->only(['index', 'show'])
             ->names('fights');
@@ -64,6 +83,10 @@ Route::middleware(['auth', 'role:owner'])
         // audit logs
         Route::get('/audit-logs', [AuditLogController::class, 'index'])
             ->name('audit-logs.index');
+
+        // reports
+        Route::get('/audit-logs/export', [ExportController::class, 'auditLogs'])
+            ->name('audit-logs.export');
 
         // live stats endpoint
         Route::get('/stats', function () {

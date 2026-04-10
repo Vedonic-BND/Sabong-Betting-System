@@ -5,50 +5,76 @@
 @section('content')
 
 <div class="flex justify-between items-center mb-6">
-    <h2 class="text-2xl font-bold text-gray-800">Dashboard</h2>
+    <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Dashboard</h2>
     <span id="ws-status"
-        class="text-xs px-3 py-1 rounded-full bg-gray-100 text-gray-500">
+        class="text-xs px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
         Connecting...
     </span>
 </div>
 
-{{-- STATS GRID --}}
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+{{-- USERS & FIGHTS GRID --}}
+<div class="mb-8">
+    <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Users & Fights</h3>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
 
-    <div class="bg-white rounded-xl shadow p-6">
-        <p class="text-sm text-gray-500">Total Admins</p>
-        <p class="text-3xl font-bold text-gray-800 mt-1">{{ $stats['total_admins'] }}</p>
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Total Admins</p>
+            <p class="text-3xl font-bold text-gray-800 dark:text-white mt-1">{{ $stats['total_admins'] }}</p>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Total Tellers</p>
+            <p class="text-3xl font-bold text-gray-800 dark:text-white mt-1">{{ $stats['total_tellers'] }}</p>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Total Fights</p>
+            <p id="total-fights" class="text-3xl font-bold text-gray-800 dark:text-white mt-1">
+                {{ $stats['total_fights'] }}
+            </p>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Fights Completed</p>
+            <p class="text-3xl font-bold text-blue-600 dark:text-blue-400 mt-1">0</p>
+        </div>
+
     </div>
+</div>
 
-    <div class="bg-white rounded-xl shadow p-6">
-        <p class="text-sm text-gray-500">Total Tellers</p>
-        <p class="text-3xl font-bold text-gray-800 mt-1">{{ $stats['total_tellers'] }}</p>
+{{-- MONEY STATS GRID --}}
+<div class="mb-8">
+    <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Financial Overview</h3>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6 border-l-4 border-blue-500">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Total Bets</p>
+            <p id="total-bets" class="text-3xl font-bold text-blue-600 dark:text-blue-400 mt-1">
+                ₱{{ number_format($stats['total_bets'], 2) }}
+            </p>
+            <p class="text-xs text-gray-400 dark:text-gray-500 mt-2">Amount wagered</p>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6 border-l-4 border-green-500">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Total Earnings</p>
+            <p id="total-earnings" class="text-3xl font-bold text-green-600 dark:text-green-400 mt-1">
+                ₱{{ number_format($stats['total_earnings'], 2) }}
+            </p>
+            <p class="text-xs text-gray-400 dark:text-gray-500 mt-2">Commission earned</p>
+        </div>
+
     </div>
-
-    <div class="bg-white rounded-xl shadow p-6">
-        <p class="text-sm text-gray-500">Total Fights</p>
-        <p id="total-fights" class="text-3xl font-bold text-gray-800 mt-1">
-            {{ $stats['total_fights'] }}
-        </p>
-    </div>
-
-    <div class="bg-white rounded-xl shadow p-6">
-        <p class="text-sm text-gray-500">Total Bets</p>
-        <p id="total-bets" class="text-3xl font-bold text-gray-800 mt-1">
-            ₱{{ number_format($stats['total_bets'], 2) }}
-        </p>
-    </div>
-
 </div>
 
 {{-- LIVE FEED --}}
-<div class="bg-white rounded-xl shadow overflow-hidden">
-    <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-        <h3 class="text-sm font-semibold text-gray-700">Live Feed</h3>
-        <span class="text-xs text-gray-400">Updates in real-time</span>
+<hr class="mb-6 border-gray-300 dark:border-gray-700">
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
+        <h3 class="text-lg font-semibold text-gray-700 dark:text-white">Live Feed</h3>
+        <span class="text-xs text-gray-400 dark:text-gray-500">Updates in real-time</span>
     </div>
-    <ul id="live-feed" class="divide-y divide-gray-100 max-h-80 overflow-y-auto">
-        <li class="px-6 py-4 text-sm text-gray-400 text-center">
+    <ul id="live-feed" class="divide-y divide-gray-100 dark:divide-gray-700 max-h-80 overflow-y-auto">
+        <li class="px-6 py-4 text-sm text-gray-400 dark:text-gray-500 text-center">
             Waiting for activity...
         </li>
     </ul>
@@ -122,6 +148,15 @@ document.addEventListener('DOMContentLoaded', function () {
                     `🏆 Fight #${data.fight_number} — Winner: <strong>${data.winner.toUpperCase()}</strong>`,
                     'text-green-700'
                 );
+                // refresh earnings when payouts are finalized
+                fetch('/owner/stats')
+                    .then(r => r.json())
+                    .then(stats => {
+                        document.getElementById('total-earnings').textContent =
+                            '₱' + parseFloat(stats.total_earnings).toLocaleString('en-PH', {
+                                minimumFractionDigits: 2
+                            });
+                    });
             });
 
         function addFeedItem(message, color = 'text-gray-700') {

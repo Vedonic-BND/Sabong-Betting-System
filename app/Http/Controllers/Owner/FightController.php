@@ -4,12 +4,22 @@ namespace App\Http\Controllers\Owner;
 
 use App\Http\Controllers\Controller;
 use App\Models\Fight;
+use Illuminate\Http\Request;
 
 class FightController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $fights = Fight::with(['creator', 'bets'])
+            ->when($request->fight_number, fn($q) =>
+                $q->where('fight_number', 'like', '%' . $request->fight_number . '%')
+            )
+            ->when($request->winner, fn($q) =>
+                $q->where('winner', 'like', '%' . strtolower($request->winner) . '%')
+            )
+            ->when($request->date, fn($q) =>
+                $q->whereDate('created_at', $request->date)
+            )
             ->orderBy('created_at', 'desc')
             ->paginate(15);
 
