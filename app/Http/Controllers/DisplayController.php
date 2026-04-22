@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Fight;
+use App\Models\Setting;
 
 class DisplayController extends Controller
 {
@@ -15,6 +16,10 @@ class DisplayController extends Controller
             ->latest()
             ->first();
 
-        return view('display', compact('fight'));
+        // get the display title from settings
+        $settings = Setting::first();
+        $displayTitle = $settings ? $settings->display_title : 'Sabong Betting System';
+
+        return view('display', compact('fight', 'displayTitle'));
     }
 }

@@ -90,6 +90,10 @@
                             class="block px-4 py-2 text-sm hover:bg-gray-600 dark:hover:bg-gray-700 first:rounded-t">
                             ⚙️ Profile Settings
                         </a>
+                        <a href="{{ route('owner.settings.show') }}"
+                            class="block px-4 py-2 text-sm hover:bg-gray-600 dark:hover:bg-gray-700">
+                            🔧 Display Settings
+                        </a>
                         <form method="POST" action="{{ route('logout') }}" class="border-t border-gray-600 dark:border-gray-700">
                             @csrf
                             <button type="submit"

@@ -38,12 +38,12 @@
 <body class="min-h-screen flex flex-col text-white">
 
     {{-- HEADER --}}
-    <header class="flex justify-between items-center px-10 py-4 border-b border-white/10">
-        <div class="flex items-center gap-3">
-            <span class="text-2xl">🐓</span>
-            <span class="text-white font-bold text-lg tracking-wide">Sabong Betting System</span>
+    <header class="flex justify-center items-center px-10 py-6 border-b border-white/10 relative">
+        <div class="flex items-center gap-4 text-center">
+            <span class="text-5xl">🐓</span>
+            <span class="text-white font-bold text-6xl tracking-wide">{{ $displayTitle ?? 'Sabong Betting System' }}</span>
         </div>
-        <div id="clock" class="text-gray-400 text-sm font-mono"></div>
+        <div id="clock" class="text-gray-400 text-2xl font-mono absolute right-10"></div>
     </header>
 
     {{-- MAIN --}}
@@ -51,10 +51,10 @@
 
         {{-- FIGHT NUMBER + STATUS --}}
         <div class="text-center">
-            <p id="fight-number" class="text-gray-400 text-sm uppercase tracking-widest mb-1">
+            <p id="fight-number" class="text-gray-400 text-4xl uppercase tracking-widest mb-4 font-bold">
                 {{ $fight ? 'Fight #' . $fight->fight_number : 'No Active Fight' }}
             </p>
-            <div id="status-badge" class="inline-block px-5 py-1.5 rounded-full text-sm font-semibold
+            <div id="status-badge" class="inline-block px-10 py-4 rounded-full text-2xl font-bold
                 @if($fight)
                     @if($fight->status === 'open') bg-green-900 text-green-400 border border-green-700
                     @elseif($fight->status === 'closed') bg-yellow-900 text-yellow-400 border border-yellow-700
@@ -79,62 +79,45 @@
         </div>
 
         {{-- MERON VS WALA --}}
-        <div id="betting-panel" class="w-full max-w-4xl grid grid-cols-2 gap-4
+        <div id="betting-panel" class="w-full grid grid-cols-2 gap-8
             {{ $fight && $fight->winner ? 'hidden' : '' }}">
 
             {{-- MERON --}}
-            <div class="meron-side rounded-2xl p-8 flex flex-col items-center gap-3 pulse-meron">
-                <p class="text-red-400 text-xs uppercase tracking-widest font-semibold">Meron</p>
+            <div class="meron-side rounded-3xl p-20 flex flex-col items-center gap-8 pulse-meron">
+                <p class="text-red-400 text-5xl uppercase tracking-widest font-bold">Meron</p>
                 <p id="meron-total"
-                    class="text-5xl font-black text-red-400 tabular-nums">
+                    class="text-8xl font-black text-red-400 tabular-nums leading-none">
                     ₱{{ $fight ? number_format($fight->meronTotal(), 2) : '0.00' }}
                 </p>
-                <div class="w-full h-px bg-red-900/50 mt-2"></div>
-                <p id="meron-multiplier" class="text-red-300 text-2xl font-bold tabular-nums">
+                <div class="w-full h-1 bg-red-900/50 mt-6"></div>
+                <p id="meron-multiplier" class="text-red-300 text-6xl font-bold tabular-nums">
                     @if($fight && $fight->meronTotal() > 0)
                         {{ number_format((($fight->meronTotal() + $fight->walaTotal()) * 0.95) / $fight->meronTotal() * 100, 2) }}%
                     @else
                         —
                     @endif
                 </p>
-                <p class="text-red-900 text-xs">Multiplier</p>
+                <p class="text-red-900 font-bold text-3xl">Payout Percentage</p>
             </div>
 
             {{-- WALA --}}
-            <div class="wala-side rounded-2xl p-8 flex flex-col items-center gap-3 pulse-wala">
-                <p class="text-blue-400 text-xs uppercase tracking-widest font-semibold">Wala</p>
+            <div class="wala-side rounded-3xl p-20 flex flex-col items-center gap-8 pulse-wala">
+                <p class="text-blue-400 text-5xl uppercase tracking-widest font-bold">Wala</p>
                 <p id="wala-total"
-                    class="text-5xl font-black text-blue-400 tabular-nums">
+                    class="text-8xl font-black text-blue-400 tabular-nums leading-none">
                     ₱{{ $fight ? number_format($fight->walaTotal(), 2) : '0.00' }}
                 </p>
-                <div class="w-full h-px bg-blue-900/50 mt-2"></div>
-                <p id="wala-multiplier" class="text-blue-300 text-2xl font-bold tabular-nums">
+                <div class="w-full h-1 bg-blue-900/50 mt-6"></div>
+                <p id="wala-multiplier" class="text-blue-300 text-6xl font-bold tabular-nums">
                     @if($fight && $fight->walaTotal() > 0)
                         {{ number_format((($fight->meronTotal() + $fight->walaTotal()) * 0.95) / $fight->walaTotal() * 100, 2) }}%
                     @else
                         —
                     @endif
                 </p>
-                <p class="text-blue-900 text-xs">Multiplier</p>
+                <p class="text-blue-900 font-bold text-3xl">Payout Percentage</p>
             </div>
 
-        </div>
-
-        {{-- LIVE BET FEED --}}
-        <div class="w-full max-w-4xl">
-            <div class="flex justify-between items-center mb-3">
-                <p class="text-gray-500 text-xs uppercase tracking-widest">Live Bets</p>
-                <span id="ws-status"
-                    class="text-xs px-2 py-0.5 rounded-full bg-gray-800 text-gray-500">
-                    Connecting...
-                </span>
-            </div>
-            <ul id="live-feed"
-                class="space-y-2 max-h-48 overflow-y-auto">
-                <li class="text-gray-600 text-sm text-center py-4">
-                    Waiting for bets...
-                </li>
-            </ul>
         </div>
 
     </main>
@@ -156,38 +139,6 @@
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
             });
-        }
-
-        function addFeedItem(side, amount, teller) {
-            const feed = document.getElementById('live-feed');
-
-            // remove placeholder
-            const placeholder = feed.querySelector('.text-center');
-            if (placeholder) placeholder.remove();
-
-            const isMeron = side === 'meron';
-            const li = document.createElement('li');
-            li.className = 'fade-in flex justify-between items-center px-4 py-2 rounded-lg ' +
-                (isMeron ? 'bg-red-950/60 border border-red-900/30' : 'bg-blue-950/60 border border-blue-900/30');
-            li.innerHTML = `
-                <div class="flex items-center gap-3">
-                    <span class="text-xs font-bold uppercase px-2 py-0.5 rounded
-                        ${isMeron ? 'bg-red-900 text-red-300' : 'bg-blue-900 text-blue-300'}">
-                        ${side}
-                    </span>
-                    <span class="text-gray-400 text-xs">${teller}</span>
-                </div>
-                <span class="font-bold tabular-nums ${isMeron ? 'text-red-400' : 'text-blue-400'}">
-                    ${formatMoney(amount)}
-                </span>
-            `;
-
-            feed.prepend(li);
-
-            // keep max 6 items
-            while (feed.children.length > 6) {
-                feed.removeChild(feed.lastChild);
-            }
         }
 
         function showWinner(winner, fightNumber) {
@@ -356,12 +307,16 @@ document.addEventListener('DOMContentLoaded', function () {
                     meronTotal > 0 ? (netPool / meronTotal * 100).toFixed(2) + '%' : '—';
                 document.getElementById('wala-multiplier').textContent =
                     walaTotal > 0 ? (netPool / walaTotal * 100).toFixed(2) + '%' : '—';
-
-                addFeedItem(data.side, data.amount, data.teller);
             })
             .listen('.winner.declared', (data) => {
                 updateStatus('done');
                 showWinner(data.winner, data.fight_number);
+            });
+
+        // ── Listen for settings updates ───────────────
+        window.Echo.channel('settings')
+            .listen('.setting.updated', (data) => {
+                document.querySelector('header span.text-white.font-bold').textContent = data.display_title;
             });
 
     }); // end waitForEcho

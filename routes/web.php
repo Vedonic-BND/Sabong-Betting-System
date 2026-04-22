@@ -6,6 +6,7 @@ use App\Http\Controllers\Owner\AuditLogController;
 use App\Http\Controllers\Owner\DashboardController;
 use App\Http\Controllers\Owner\FightController;
 use App\Http\Controllers\Owner\UserController;
+use App\Http\Controllers\Owner\SettingsController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ReceiptController;
 use App\Http\Controllers\Owner\ExportController;
@@ -71,6 +72,12 @@ Route::middleware(['auth', 'role:owner'])
             ->name('profile.update');
         Route::put('/profile/password', [ProfileController::class, 'updatePassword'])
             ->name('profile.update-password');
+
+        // settings
+        Route::get('/settings', [SettingsController::class, 'show'])
+            ->name('settings.show');
+        Route::put('/settings', [SettingsController::class, 'update'])
+            ->name('settings.update');
 
         // fights - export route must be before resource route
         Route::get('/fights/export', [ExportController::class, 'fights'])
