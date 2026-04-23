@@ -215,36 +215,39 @@ class FightController extends Controller
     // POST /api/fight/reset
     public function reset()
     {
-        // Find the current active fight
-        $fight = Fight::whereIn('status', ['pending', 'open', 'closed', 'done'])->latest()->first();
+        try {
+            // Log all fights before reset
+            $fights = Fight::all();
+            foreach ($fights as $fight) {
+                AuditLogger::log('archived_fight_on_reset', 'fight', $fight->id, [
+                    'fight_number' => $fight->fight_number,
+                    'status' => $fight->status,
+                ]);
+            }
 
-        if (!$fight) {
+            // Disable foreign key checks temporarily
+            \DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+
+            // Delete all fights (this will cascade and delete related bets if needed)
+            Fight::query()->delete();
+
+            // Re-enable foreign key checks
+            \DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+
+            AuditLogger::log('reset_fight_counter', 'system', null, [
+                'message' => 'Fight counter reset. All fights and bets archived. Next fight will be 1.',
+            ]);
+
+            broadcast(new FightUpdated(new Fight()));
+
             return response()->json([
-                'message' => 'No active fight to reset.',
-            ], 422);
+                'message' => 'Fight counter reset successfully. All fights cleared. Next fight will start from 1.',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to reset fight counter: ' . $e->getMessage(),
+            ], 500);
         }
-
-        // Reset the fight status back to pending
-        $fight->status       = 'pending';
-        $fight->meron_status = 'open';
-        $fight->wala_status  = 'open';
-        $fight->winner       = null;
-        $fight->save();
-
-        AuditLogger::log('reset_fight', 'fight', $fight->id, [
-            'fight_number' => $fight->fight_number,
-        ]);
-
-        broadcast(new FightUpdated($fight));
-
-        return response()->json([
-            'message' => 'Fight reset successfully.',
-            'fight' => [
-                'id'     => $fight->id,
-                'fight_number' => $fight->fight_number,
-                'status' => $fight->status,
-            ],
-        ]);
     }
 
     // POST /api/fight/{id}/winner

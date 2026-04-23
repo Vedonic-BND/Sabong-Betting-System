@@ -18,13 +18,13 @@ class CheckTokenAbility
 
         $token = $user->currentAccessToken();
 
-        // admin token can access both admin AND cashin routes
+        // admin token can access all routes
         if ($token->name === 'admin') {
             return $next($request);
         }
 
-        // teller tokens only access their specific route
-        if ($token->name !== $ability) {
+        // check if token has the required ability
+        if (!$token->can($ability)) {
             return response()->json(['message' => 'Access denied for this app.'], 403);
         }
 

@@ -54,7 +54,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     | CASH IN (Admin and Teller)
     |----------------------------------------------------------------------
     */
-    Route::middleware('checkRoles:admin,teller')->group(function () {
+    Route::middleware(['checkRoles:admin|teller', 'ability:cashin'])->group(function () {
         Route::post('/bet', [BetController::class, 'store']);
     });
 
