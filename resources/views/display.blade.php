@@ -56,9 +56,9 @@
             </p>
             <div id="status-badge" class="inline-block px-10 py-4 rounded-full text-2xl font-bold
                 @if($fight)
-                    @if($fight->status === 'open') bg-green-900 text-green-400 border border-green-700
-                    @elseif($fight->status === 'closed') bg-yellow-900 text-yellow-400 border border-yellow-700
-                    @else bg-gray-800 text-gray-400 border border-gray-600
+                    @if($fight->status === 'open') bg-green-900 text-green-400 border border-green-700 text-2xl font-bold
+                    @elseif($fight->status === 'closed') bg-yellow-900 text-yellow-400 border border-yellow-700 text-2xl font-bold
+                    @else bg-gray-800 text-gray-400 border border-gray-600 text-2xl font-bold
                     @endif
                 @else
                     bg-gray-800 text-gray-400 border border-gray-600
@@ -69,12 +69,11 @@
         </div>
 
         {{-- WINNER OVERLAY --}}
-        <div id="winner-overlay" class="hidden w-full max-w-2xl">
-            <div class="rounded-2xl p-8 text-center border"
-                id="winner-card">
-                <p class="text-gray-400 text-sm uppercase tracking-widest mb-2">Winner</p>
-                <p id="winner-text" class="text-6xl font-black uppercase tracking-wider mb-2"></p>
-                <p class="text-gray-400 text-sm">Fight closed</p>
+        <div id="winner-overlay" class="hidden w-full max-w-4xl">
+            <div class="rounded-2xl p-16 text-center border min-h-96" id="winner-card">
+                <p id="winner-label" class="text-gray-400 text-5xl uppercase tracking-widest mb-4">Winner</p>
+                <p id="winner-text" class="text-[10rem] leading-[1.2] font-black uppercase tracking-wider mb-4"></p>
+                <p id="fight-closed-text" class="text-gray-400 text-5xl">Fight closed</p>
             </div>
         </div>
 
@@ -83,8 +82,9 @@
             {{ $fight && $fight->winner ? 'hidden' : '' }}">
 
             {{-- MERON --}}
-            <div class="meron-side rounded-3xl p-20 flex flex-col items-center gap-8 pulse-meron">
+            <div id="meron-side" class="meron-side rounded-3xl p-20 flex flex-col items-center gap-8 pulse-meron">
                 <p class="text-red-400 text-5xl uppercase tracking-widest font-bold">Meron</p>
+                <p id="meron-status-label" style="display: none;" class="text-red-400 text-4xl uppercase tracking-widest font-bold">CLOSED</p>
                 <p id="meron-total"
                     class="text-8xl font-black text-red-400 tabular-nums leading-none">
                     ₱{{ $fight ? number_format($fight->meronTotal(), 2) : '0.00' }}
@@ -101,8 +101,9 @@
             </div>
 
             {{-- WALA --}}
-            <div class="wala-side rounded-3xl p-20 flex flex-col items-center gap-8 pulse-wala">
+            <div id="wala-side" class="wala-side rounded-3xl p-20 flex flex-col items-center gap-8 pulse-wala">
                 <p class="text-blue-400 text-5xl uppercase tracking-widest font-bold">Wala</p>
+                <p id="wala-status-label" style="display: none;" class="text-blue-400 text-4xl uppercase tracking-widest font-bold">CLOSED</p>
                 <p id="wala-total"
                     class="text-8xl font-black text-blue-400 tabular-nums leading-none">
                     ₱{{ $fight ? number_format($fight->walaTotal(), 2) : '0.00' }}
@@ -146,6 +147,8 @@
             const panel    = document.getElementById('betting-panel');
             const card     = document.getElementById('winner-card');
             const text     = document.getElementById('winner-text');
+            const label    = document.getElementById('winner-label');
+            const closedText = document.getElementById('fight-closed-text');
 
             panel.classList.add('hidden');
             overlay.classList.remove('hidden');
@@ -153,18 +156,24 @@
 
             const isMeron = winner === 'meron';
             const isDraw  = winner === 'draw';
+            const isWala  = winner === 'wala';
 
             text.textContent = winner.toUpperCase();
 
             if (isMeron) {
-                card.className = 'rounded-2xl p-8 text-center border border-red-500 bg-red-950/60';
-                text.className = 'text-6xl font-black uppercase tracking-wider mb-2 text-red-400';
+                card.className = 'rounded-2xl p-16 text-center border border-red-500 bg-red-950/60';
+                text.className = 'text-[10rem] leading-[1.2] font-black uppercase tracking-wider mb-4 text-red-400';
+            } else if (isWala) {
+                card.className = 'rounded-2xl p-16 text-center border border-blue-500 bg-blue-950/60';
+                text.className = 'text-[10rem] leading-[1.2] font-black uppercase tracking-wider mb-4 text-blue-400';
             } else if (!isDraw) {
-                card.className = 'rounded-2xl p-8 text-center border border-blue-500 bg-blue-950/60';
-                text.className = 'text-6xl font-black uppercase tracking-wider mb-2 text-blue-400';
+                card.className = 'rounded-2xl p-16 text-center border border-blue-500 bg-blue-950/60';
+                text.className = 'text-[10rem] leading-[1.2] font-black uppercase tracking-wider mb-4 text-blue-400';
+                closedText.classList.add('hidden');
             } else {
-                card.className = 'rounded-2xl p-8 text-center border border-gray-500 bg-gray-900';
-                text.className = 'text-6xl font-black uppercase tracking-wider mb-2 text-gray-400';
+                card.className = 'rounded-2xl p-16 text-center border border-gray-500 bg-gray-900';
+                text.className = 'text-[10rem] leading-[1.2] font-black uppercase tracking-wider mb-2  text-gray-400';
+                closedText.classList.add('hidden');
             }
         }
 
@@ -179,7 +188,7 @@
             };
             const config = configs[status] ?? configs.pending;
             badge.textContent = config.text;
-            badge.className   = 'inline-block px-5 py-1.5 rounded-full text-sm font-semibold ' + config.cls;
+            badge.className   = 'inline-block px-10 py-4 rounded-full text-2xl font-bold ' + config.cls;
         }
 
         // ── WebSocket ────────────────────────────────────────
@@ -313,10 +322,43 @@ document.addEventListener('DOMContentLoaded', function () {
                 showWinner(data.winner, data.fight_number);
             });
 
+        function updateSideStatus(meron_status, wala_status) {
+            const meronSide = document.getElementById('meron-side');
+            const walaSide = document.getElementById('wala-side');
+            const meronLabel = document.getElementById('meron-status-label');
+            const walaLabel = document.getElementById('wala-status-label');
+
+            if (meron_status === 'closed') {
+                meronSide.classList.add('opacity-50');
+                meronSide.classList.remove('pulse-meron');
+                meronLabel.style.display = 'block';
+            } else {
+                meronSide.classList.remove('opacity-50');
+                meronSide.classList.add('pulse-meron');
+                meronLabel.style.display = 'none';
+            }
+
+            if (wala_status === 'closed') {
+                walaSide.classList.add('opacity-50');
+                walaSide.classList.remove('pulse-wala');
+                walaLabel.style.display = 'block';
+            } else {
+                walaSide.classList.remove('opacity-50');
+                walaSide.classList.add('pulse-wala');
+                walaLabel.style.display = 'none';
+            }
+        }
+
         // ── Listen for settings updates ───────────────
         window.Echo.channel('settings')
             .listen('.setting.updated', (data) => {
                 document.querySelector('header span.text-white.font-bold').textContent = data.display_title;
+            });
+
+        // ── Listen for side status updates ───────────
+        window.Echo.channel('fights')
+            .listen('.side.status.updated', (data) => {
+                updateSideStatus(data.meron_status, data.wala_status);
             });
 
     }); // end waitForEcho

@@ -9,37 +9,39 @@
 
         body {
             font-family: 'Courier New', monospace;
-            font-size: 12px;
-            width: 80mm;
+            font-size: 11px;
+            width: 82.5mm;
+            max-height: 82.5mm;
             margin: 0 auto;
-            padding: 4mm;
+            padding: 3mm;
             background: white;
             color: black;
+            overflow: hidden;
         }
 
         .center   { text-align: center; }
         .bold     { font-weight: bold; }
-        .large    { font-size: 16px; }
-        .xlarge   { font-size: 20px; }
-        .divider  { border-top: 1px dashed #000; margin: 4mm 0; }
-        .row      { display: flex; justify-content: space-between; margin: 1.5mm 0; }
-        .label    { color: #555; }
-        .value    { font-weight: bold; text-align: right; }
+        .large    { font-size: 14px; }
+        .xlarge   { font-size: 16px; }
+        .divider  { border-top: 1px dashed #000; margin: 2mm 0; }
+        .row      { display: flex; justify-content: space-between; margin: 1mm 0; }
+        .label    { color: #555; font-size: 10px; }
+        .value    { font-weight: bold; text-align: right; font-size: 10px; }
 
-        .side-meron { color: #cc0000; font-size: 18px; font-weight: bold; }
-        .side-wala  { color: #0000cc; font-size: 18px; font-weight: bold; }
+        .side-meron { color: #cc0000; font-size: 14px; font-weight: bold; }
+        .side-wala  { color: #0000cc; font-size: 14px; font-weight: bold; }
 
         .barcode-img {
             width: 100%;
-            max-width: 72mm;
+            max-width: 76.5mm;
             height: auto;
             display: block;
             margin: 0 auto;
         }
 
         .qr-img {
-            width: 40mm;
-            height: 40mm;
+            width: 25mm;
+            height: 25mm;
             display: block;
             margin: 0 auto;
         }
@@ -54,9 +56,8 @@
 
     {{-- HEADER --}}
     <div class="center">
-        <p class="bold xlarge">🐓 SABONG</p>
-        <p class="bold large">BETTING SYSTEM</p>
-        <p style="font-size:10px; color:#555; margin-top:1mm;">Official Bet Receipt</p>
+        <p class="bold xlarge">🐓 {{ strtoupper($displayTitle ?? 'SABONG BETTING SYSTEM') }}</p>
+        <p style="font-size:9px; color:#555; margin-top:0.5mm;">Official Bet Receipt</p>
     </div>
 
     <div class="divider"></div>
@@ -111,25 +112,17 @@
     <div class="divider"></div>
 
     {{-- BARCODE --}}
-    <div class="center" style="margin: 3mm 0;">
+    <div class="center" style="margin: 1.5mm 0;">
         <img src="{{ $barcode }}" class="barcode-img" alt="barcode" />
-        <p style="font-size: 11px; margin-top: 1mm; letter-spacing: 2px;">
+        <p style="font-size: 10px; margin-top: 0.5mm; letter-spacing: 1px;">
             {{ $bet->reference }}
         </p>
     </div>
 
     <div class="divider"></div>
 
-    {{-- QR CODE --}}
-    <div class="center" style="margin: 3mm 0;">
-        <p style="font-size: 10px; color: #555; margin-bottom: 2mm;">Scan to verify</p>
-        <img src="{{ $qr }}" class="qr-img" alt="qr code" />
-    </div>
-
-    <div class="divider"></div>
-
     {{-- FOOTER --}}
-    <div class="center" style="font-size: 10px; color: #555; margin-top: 2mm;">
+    <div class="center" style="font-size: 9px; color: #555; margin-top: 1mm;">
         <p>Keep this receipt.</p>
         <p>Present upon claiming payout.</p>
     </div>

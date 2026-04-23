@@ -14,6 +14,7 @@ class Payout extends Model
         'gross_payout',
         'commission',
         'net_payout',
+        'winning_side_multiplier',
         'status',
     ];
 
@@ -23,6 +24,7 @@ class Payout extends Model
             'gross_payout' => 'decimal:2',
             'commission'   => 'decimal:2',
             'net_payout'   => 'decimal:2',
+            'winning_side_multiplier' => 'decimal:2',
         ];
     }
 

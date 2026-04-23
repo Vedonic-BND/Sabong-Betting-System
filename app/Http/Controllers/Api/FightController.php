@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Events\FightUpdated;
+use App\Events\SideStatusUpdated;
 use App\Events\WinnerDeclared;
 use App\Http\Controllers\Controller;
 use App\Models\Fight;
@@ -133,6 +134,11 @@ class FightController extends Controller
             $fight->wala_status = $request->status;
         }
 
+        // if both sides are closed, close the fight status
+        if ($fight->meron_status === 'closed' && $fight->wala_status === 'closed') {
+            $fight->status = 'closed';
+        }
+
         $fight->save();
 
         AuditLogger::log(
@@ -146,8 +152,43 @@ class FightController extends Controller
         );
 
         broadcast(new FightUpdated($fight));
+        broadcast(new SideStatusUpdated($fight));
 
         return response()->json(['message' => ucfirst($request->side) . ' status updated.']);
+    }
+
+    // PUT /api/fight/{id}/all-side-status
+    public function allSideStatus(Request $request, Fight $fight)
+    {
+        $request->validate([
+            'status' => ['required', 'in:open,closed'],
+        ]);
+
+        $fight->meron_status = $request->status;
+        $fight->wala_status = $request->status;
+
+        // update fight status based on sides status
+        if ($request->status === 'closed') {
+            $fight->status = 'closed';
+        } elseif ($request->status === 'open') {
+            $fight->status = 'open';
+        }
+
+        $fight->save();
+
+        AuditLogger::log(
+            'updated_all_side_status',
+            'fight',
+            $fight->id,
+            [
+                'status' => $request->status,
+            ]
+        );
+
+        broadcast(new FightUpdated($fight));
+        broadcast(new SideStatusUpdated($fight));
+
+        return response()->json(['message' => 'Both sides status updated to ' . $request->status . '.']);
     }
 
     // POST /api/fight/{id}/finalize

@@ -24,6 +24,9 @@ Route::get('/', [DisplayController::class, 'index'])->name('display');
 Route::get('/receipt/{reference}', [ReceiptController::class, 'show'])
     ->name('receipt');
 
+Route::get('/payout-receipt/{reference}', [ReceiptController::class, 'payout'])
+    ->name('payout-receipt');
+
 /*
 |--------------------------------------------------------------------------
 | OWNER AUTH (hidden URL)

@@ -77,6 +77,24 @@
             </p>
         </div>
         <div>
+            <p class="text-gray-400">Winning Side Multiplier</p>
+            <p class="font-medium text-gray-800">
+                @if ($fight->winner && in_array($fight->winner, ['meron', 'wala']))
+                    @php
+                        $meronTotal = $fight->meronTotal();
+                        $walaTotal = $fight->walaTotal();
+                        $totalPool = $meronTotal + $walaTotal;
+                        $netPool = $totalPool * 0.95;
+                        $winningSideTotal = $fight->winner === 'meron' ? $meronTotal : $walaTotal;
+                        $multiplier = $winningSideTotal > 0 ? ($netPool / $winningSideTotal) * 100 : 0;
+                    @endphp
+                    {{ number_format($multiplier, 2) }}%
+                @else
+                    —
+                @endif
+            </p>
+        </div>
+        <div>
             <p class="text-gray-400">Date</p>
             <p class="font-medium text-gray-800">
                 {{ $fight->created_at->format('M d, Y h:i A') }}

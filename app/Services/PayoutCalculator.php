@@ -10,7 +10,8 @@ class PayoutCalculator
      * Calculate payout for each bet in a fight after winner is declared.
      *
      * Formula:
-     *   Net Pool = (Meron + Wala) × 0.90  ← 10% commission
+     *   Net Pool = (Meron + Wala) × 0.95  ← 5% commission (95% payout)
+     *   Winner multiplier = (Net Pool / Winning Side Total) × 100
      *   Winner payout = (bet amount / winning side total) × Net Pool
      */
     public static function calculate(Fight $fight): void
@@ -29,6 +30,7 @@ class PayoutCalculator
                     'gross_payout' => $bet->amount,
                     'commission'   => 0,
                     'net_payout'   => $bet->amount,
+                    'winning_side_multiplier' => 100.00,
                     'status'       => 'pending',
                 ]);
             }
@@ -36,6 +38,8 @@ class PayoutCalculator
         }
 
         $winningSideTotal = $winner === 'meron' ? $meronTotal : $walaTotal;
+        // Calculate the multiplier for the winning side (same as displayed on screen)
+        $winningMultiplier = ($netPool / $winningSideTotal) * 100;
 
         foreach ($fight->bets as $bet) {
             if ($bet->side === $winner) {
@@ -54,6 +58,7 @@ class PayoutCalculator
                 'gross_payout' => round($gross, 2),
                 'commission'   => round($betCommission, 2),
                 'net_payout'   => round($net, 2),
+                'winning_side_multiplier' => round($winningMultiplier, 2),
                 'status'       => 'pending',
             ]);
         }
