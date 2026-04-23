@@ -14,8 +14,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
-            'role'    => \App\Http\Middleware\RoleMiddleware::class,
-            'ability' => \App\Http\Middleware\CheckTokenAbility::class,
+            'role'       => \App\Http\Middleware\RoleMiddleware::class,
+            'checkRoles' => \App\Http\Middleware\CheckRoles::class,
+            'ability'    => \App\Http\Middleware\CheckTokenAbility::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

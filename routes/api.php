@@ -40,27 +40,27 @@ Route::middleware(['auth:sanctum'])->group(function () {
     */
     Route::middleware('role:admin')->group(function () {
         Route::post('/fight', [FightController::class, 'store']);
+        Route::post('/fight/reset', [FightController::class, 'reset']);
         Route::put('/fight/{fight}/status', [FightController::class, 'updateStatus']);
         Route::post('/fight/{fight}/winner', [FightController::class, 'declareWinner']);
         Route::put('/fight/{fight}/side-status', [FightController::class, 'updateSideStatus']);
         Route::put('/fight/{fight}/all-side-status', [FightController::class, 'allSideStatus']);
         Route::post('/fight/{fight}/finalize', [FightController::class, 'finalizeBet']);
         Route::get('/fight/history', [FightController::class, 'history']);
-        Route::post('/bet', [BetController::class, 'store']);
     });
 
     /*
     |----------------------------------------------------------------------
-    | TELLER Cash In only
+    | CASH IN (Admin and Teller)
     |----------------------------------------------------------------------
     */
-    Route::middleware('role:teller')->group(function () {
+    Route::middleware('checkRoles:admin,teller')->group(function () {
         Route::post('/bet', [BetController::class, 'store']);
     });
 
     /*
     |----------------------------------------------------------------------
-    | TELLER Cash Out only
+    | CASH OUT (Teller only)
     |----------------------------------------------------------------------
     */
     Route::middleware('role:teller')->group(function () {

@@ -212,6 +212,41 @@ class FightController extends Controller
         return response()->json(['message' => 'Betting finalized.']);
     }
 
+    // POST /api/fight/reset
+    public function reset()
+    {
+        // Find the current active fight
+        $fight = Fight::whereIn('status', ['pending', 'open', 'closed', 'done'])->latest()->first();
+
+        if (!$fight) {
+            return response()->json([
+                'message' => 'No active fight to reset.',
+            ], 422);
+        }
+
+        // Reset the fight status back to pending
+        $fight->status       = 'pending';
+        $fight->meron_status = 'open';
+        $fight->wala_status  = 'open';
+        $fight->winner       = null;
+        $fight->save();
+
+        AuditLogger::log('reset_fight', 'fight', $fight->id, [
+            'fight_number' => $fight->fight_number,
+        ]);
+
+        broadcast(new FightUpdated($fight));
+
+        return response()->json([
+            'message' => 'Fight reset successfully.',
+            'fight' => [
+                'id'     => $fight->id,
+                'fight_number' => $fight->fight_number,
+                'status' => $fight->status,
+            ],
+        ]);
+    }
+
     // POST /api/fight/{id}/winner
     public function declareWinner(Request $request, Fight $fight)
     {

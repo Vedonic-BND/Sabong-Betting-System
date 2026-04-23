@@ -19,6 +19,12 @@ class PayoutCalculator
         $meronTotal = $fight->meronTotal();
         $walaTotal  = $fight->walaTotal();
         $totalPool  = $meronTotal + $walaTotal;
+
+        // If no bets, nothing to calculate
+        if ($totalPool <= 0) {
+            return;
+        }
+
         $netPool    = $totalPool * 0.95;
         $commission = $totalPool * 0.05;
         $winner     = $fight->winner;
@@ -38,6 +44,12 @@ class PayoutCalculator
         }
 
         $winningSideTotal = $winner === 'meron' ? $meronTotal : $walaTotal;
+
+        // Check if winning side has any bets
+        if ($winningSideTotal <= 0) {
+            return; // No bets on winning side, nothing to calculate
+        }
+
         // Calculate the multiplier for the winning side (same as displayed on screen)
         $winningMultiplier = ($netPool / $winningSideTotal) * 100;
 
@@ -50,7 +62,8 @@ class PayoutCalculator
             } else {
                 // loser gets nothing
                 $gross         = 0;
-                $betCommission = ($bet->amount / ($totalPool - $winningSideTotal)) * $commission;
+                $losingTotal = $totalPool - $winningSideTotal;
+                $betCommission = $losingTotal > 0 ? ($bet->amount / $losingTotal) * $commission : 0;
                 $net           = 0;
             }
 

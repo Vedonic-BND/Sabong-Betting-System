@@ -69,10 +69,10 @@
         </div>
 
         {{-- WINNER OVERLAY --}}
-        <div id="winner-overlay" class="hidden w-full max-w-4xl">
+        <div id="winner-overlay" class="hidden w-full max-w-6xl">
             <div class="rounded-2xl p-16 text-center border min-h-96" id="winner-card">
                 <p id="winner-label" class="text-gray-400 text-5xl uppercase tracking-widest mb-4">Winner</p>
-                <p id="winner-text" class="text-[10rem] leading-[1.2] font-black uppercase tracking-wider mb-4"></p>
+                <p id="winner-text" class="text-[10rem] leading-[1.2] font-black uppercase tracking-wider mb-4 break-words"></p>
                 <p id="fight-closed-text" class="text-gray-400 text-5xl">Fight closed</p>
             </div>
         </div>
@@ -91,11 +91,14 @@
                 </p>
                 <div class="w-full h-1 bg-red-900/50 mt-6"></div>
                 <p id="meron-multiplier" class="text-red-300 text-6xl font-bold tabular-nums">
-                    @if($fight && $fight->meronTotal() > 0)
-                        {{ number_format((($fight->meronTotal() + $fight->walaTotal()) * 0.95) / $fight->meronTotal() * 100, 2) }}%
-                    @else
-                        —
-                    @endif
+                    @php
+                        $meronTotal = $fight ? $fight->meronTotal() : 0;
+                        $walaTotal = $fight ? $fight->walaTotal() : 0;
+                        $totalPool = $meronTotal + $walaTotal;
+                        $netPool = $totalPool * 0.95;
+                        $meronMultiplier = $meronTotal > 0 ? ($netPool / $meronTotal * 100) : 100;
+                    @endphp
+                    {{ number_format($meronMultiplier, 2) }}%
                 </p>
                 <p class="text-red-900 font-bold text-3xl">Payout Percentage</p>
             </div>
@@ -110,11 +113,14 @@
                 </p>
                 <div class="w-full h-1 bg-blue-900/50 mt-6"></div>
                 <p id="wala-multiplier" class="text-blue-300 text-6xl font-bold tabular-nums">
-                    @if($fight && $fight->walaTotal() > 0)
-                        {{ number_format((($fight->meronTotal() + $fight->walaTotal()) * 0.95) / $fight->walaTotal() * 100, 2) }}%
-                    @else
-                        —
-                    @endif
+                    @php
+                        $meronTotal = $fight ? $fight->meronTotal() : 0;
+                        $walaTotal = $fight ? $fight->walaTotal() : 0;
+                        $totalPool = $meronTotal + $walaTotal;
+                        $netPool = $totalPool * 0.95;
+                        $walaMultiplier = $walaTotal > 0 ? ($netPool / $walaTotal * 100) : 100;
+                    @endphp
+                    {{ number_format($walaMultiplier, 2) }}%
                 </p>
                 <p class="text-blue-900 font-bold text-3xl">Payout Percentage</p>
             </div>
@@ -231,9 +237,9 @@
 
                 // update multipliers
                 document.getElementById('meron-multiplier').textContent =
-                    meronTotal > 0 ? (netPool / meronTotal * 100).toFixed(2) + '%' : '—';
+                    meronTotal > 0 ? (netPool / meronTotal * 100).toFixed(2) + '%' : '100.00%';
                 document.getElementById('wala-multiplier').textContent =
-                    walaTotal > 0 ? (netPool / walaTotal * 100).toFixed(2) + '%' : '—';
+                    walaTotal > 0 ? (netPool / walaTotal * 100).toFixed(2) + '%' : '100.00%';
 
                 addFeedItem(data.side, data.amount, data.teller);
             })
