@@ -56,6 +56,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     */
     Route::middleware(['checkRoles:admin|teller', 'ability:cashin'])->group(function () {
         Route::post('/bet', [BetController::class, 'store']);
+        Route::get('/bet/history', [BetController::class, 'index']);
+        Route::get('/bet/{reference}', [BetController::class, 'show']);
     });
 
     /*
