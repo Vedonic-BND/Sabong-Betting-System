@@ -10,14 +10,17 @@ use Illuminate\Http\Request;
 class PayoutController extends Controller
 {
     // GET /api/payout/{reference}
-    public function show(string $reference)
+    public function show(Request $request, string $reference)
     {
+        $user = $request->user();
+
         $bet = Bet::with(['fight', 'payout', 'teller'])
             ->where('reference', $reference)
+            ->where('teller_id', $user->id)
             ->first();
 
         if (!$bet) {
-            return response()->json(['message' => 'Bet not found.'], 404);
+            return response()->json(['message' => 'Bet not found or unauthorized.'], 404);
         }
 
         if (!$bet->payout) {
@@ -35,18 +38,24 @@ class PayoutController extends Controller
             'commission'   => $bet->payout->commission,
             'net_payout'   => $bet->payout->net_payout,
             'status'       => $bet->payout->status,
+            'teller'       => $bet->teller->name,
+            'payout_date'  => $bet->payout->paid_at?->format('M d, Y'),
+            'payout_time'  => $bet->payout->paid_at?->format('h:i A'),
         ]);
     }
 
     // POST /api/payout/{reference}
-    public function confirm(string $reference)
+    public function confirm(Request $request, string $reference)
     {
+        $user = $request->user();
+
         $bet = Bet::with('payout')
             ->where('reference', $reference)
+            ->where('teller_id', $user->id)
             ->first();
 
         if (!$bet) {
-            return response()->json(['message' => 'Bet not found.'], 404);
+            return response()->json(['message' => 'Bet not found or unauthorized.'], 404);
         }
 
         if (!$bet->payout) {
