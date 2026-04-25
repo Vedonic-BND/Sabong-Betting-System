@@ -83,12 +83,12 @@ class PayoutController extends Controller
         $tellerBets = Bet::where('teller_id', $user->id)
             ->with('payout')
             ->get();
-        
+
         $totalCashIn = $tellerBets->sum('amount');
         $totalPaidOut = $tellerBets
             ->filter(fn($b) => $b->payout && $b->payout->status === 'paid')
             ->sum(fn($b) => $b->payout->net_payout);
-        
+
         $onHandCash = $totalCashIn - $totalPaidOut;
 
         // Broadcast the update

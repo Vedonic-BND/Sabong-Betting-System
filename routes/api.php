@@ -17,6 +17,14 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('/auth/login', [AuthController::class, 'login']);
 
+// Get system settings (public - no auth required)
+Route::get('/settings', function () {
+    $settings = \App\Models\Setting::first();
+    return response()->json([
+        'display_title' => $settings?->display_title ?? 'SABONG BETTING SYSTEM',
+    ]);
+});
+
 /*
 |--------------------------------------------------------------------------
 | AUTHENTICATED (any valid token)
