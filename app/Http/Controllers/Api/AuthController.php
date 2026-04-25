@@ -27,8 +27,8 @@ class AuthController extends Controller
             ], 401);
         }
 
-        // only admin and teller can use the app
-        if (!in_array($user->role, ['admin', 'teller'])) {
+        // only admin, teller, and runner can use the app
+        if (!in_array($user->role, ['admin', 'teller', 'runner'])) {
             return response()->json([
                 'message' => 'Access denied.',
             ], 403);
@@ -71,6 +71,21 @@ class AuthController extends Controller
                 'role'      => 'teller',
                 'token'     => $plainToken,
                 'user'      => [
+                    'id'   => $user->id,
+                    'name' => $user->name,
+                    'role' => $user->role,
+                ],
+            ]);
+        }
+
+        // runner — no device limit
+        if ($user->role === 'runner') {
+            $token = $user->createToken('runner', ['runner'])->plainTextToken;
+
+            return response()->json([
+                'role'  => 'runner',
+                'token' => $token,
+                'user'  => [
                     'id'   => $user->id,
                     'name' => $user->name,
                     'role' => $user->role,

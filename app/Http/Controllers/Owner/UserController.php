@@ -13,7 +13,7 @@ class UserController extends Controller
 {
     public function index()
     {
-        $users = User::whereIn('role', ['admin', 'teller'])
+        $users = User::whereIn('role', ['admin', 'teller', 'runner'])
             ->orderBy('role')
             ->orderBy('name')
             ->get();
@@ -32,7 +32,7 @@ class UserController extends Controller
             'name'     => ['required', 'string', 'max:255'],
             'username' => ['required', 'string', 'max:255', 'unique:users,username'],
             'password' => ['required', 'confirmed', Password::min(6)],
-            'role'     => ['required', 'in:admin,teller'],
+            'role'     => ['required', 'in:admin,teller,runner'],
         ]);
 
         $user = User::create([
@@ -73,7 +73,7 @@ class UserController extends Controller
             'name'     => ['required', 'string', 'max:255'],
             'username' => ['required', 'string', 'max:255', 'unique:users,username,' . $user->id],
             'password' => ['nullable', 'confirmed', Password::min(6)],
-            'role'     => ['required', 'in:admin,teller'],
+            'role'     => ['required', 'in:admin,teller,runner'],
         ]);
 
         $user->name     = $validated['name'];

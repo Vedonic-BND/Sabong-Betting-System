@@ -38,7 +38,7 @@
                     <td class="px-6 py-4 text-gray-600 dark:text-gray-400">{{ $user->username }}</td>
                     <td class="px-6 py-4">
                         <span class="px-2 py-1 rounded-full text-xs font-semibold
-                            {{ $user->role === 'admin' ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-700' }}">
+                            {{ $user->role === 'admin' ? 'bg-blue-100 text-blue-700' : ($user->role === 'teller' ? 'bg-yellow-100 text-yellow-700' : 'bg-purple-100 text-purple-700') }}">
                             {{ ucfirst($user->role) }}
                         </span>
                     </td>
@@ -64,7 +64,7 @@
             @empty
                 <tr>
                     <td colspan="5" class="px-6 py-8 text-center text-gray-400 dark:text-gray-500">
-                        No users found. Add your first admin or teller.
+                        No users found. Add your first admin, teller, or runner.
                     </td>
                 </tr>
             @endforelse

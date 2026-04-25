@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Events\BetPlaced;
+use App\Events\TellerCashStatusUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\Bet;
 use App\Models\Fight;
@@ -133,6 +134,26 @@ class BetController extends Controller
         ]);
 
         broadcast(new BetPlaced($bet));
+
+        // Calculate and broadcast updated on-hand cash for this teller
+        $tellerBets = Bet::where('teller_id', $request->user()->id)
+            ->with('payout')
+            ->get();
+        
+        $totalCashIn = $tellerBets->sum('amount');
+        $totalPaidOut = $tellerBets
+            ->filter(fn($b) => $b->payout && $b->payout->status === 'paid')
+            ->sum(fn($b) => $b->payout->net_payout);
+        
+        $onHandCash = $totalCashIn - $totalPaidOut;
+
+        broadcast(new TellerCashStatusUpdated(
+            $request->user()->id,
+            $request->user()->name,
+            $onHandCash,
+            'bet',
+            $request->amount
+        ));
 
         return response()->json([
             'message'   => 'Bet placed successfully.',

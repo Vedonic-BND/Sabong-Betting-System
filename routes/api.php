@@ -2,9 +2,11 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BetController;
+use App\Http\Controllers\Api\CashRequestController;
 use App\Http\Controllers\Api\DeviceController;
 use App\Http\Controllers\Api\FightController;
 use App\Http\Controllers\Api\PayoutController;
+use App\Http\Controllers\Api\RunnerController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -68,6 +70,36 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::middleware('role:teller')->group(function () {
         Route::get('/payout/{reference}', [PayoutController::class, 'show']);
         Route::post('/payout/{reference}', [PayoutController::class, 'confirm']);
+    });
+
+    /*
+    |----------------------------------------------------------------------
+    | CASH REQUESTS (Teller, Runner, Admin, Owner)
+    |----------------------------------------------------------------------
+    */
+    // Teller creates cash request
+    Route::middleware('role:teller')->group(function () {
+        Route::post('/cash-request', [CashRequestController::class, 'store']);
+    });
+
+    // Runner and Owner view and manage cash requests
+    Route::middleware(['checkRoles:runner|admin|owner'])->group(function () {
+        Route::get('/cash-requests', [CashRequestController::class, 'index']);
+        Route::get('/cash-request/{id}', [CashRequestController::class, 'show']);
+        Route::patch('/cash-request/{id}/approve', [CashRequestController::class, 'approve']);
+        Route::patch('/cash-request/{id}/complete', [CashRequestController::class, 'complete']);
+        Route::patch('/cash-request/{id}/reject', [CashRequestController::class, 'reject']);
+    });
+
+    /*
+    |----------------------------------------------------------------------
+    | RUNNER only
+    |----------------------------------------------------------------------
+    */
+    Route::middleware('role:runner')->group(function () {
+        Route::get('/runner/tellers', [RunnerController::class, 'getTellersCashStatus']);
+        Route::get('/runner/history', [RunnerController::class, 'getHistory']);
+        Route::post('/runner/transaction', [RunnerController::class, 'createTransaction']);
     });
 
 });

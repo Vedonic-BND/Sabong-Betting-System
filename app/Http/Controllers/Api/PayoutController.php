@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\TellerCashStatusUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\Bet;
 use App\Services\AuditLogger;
@@ -77,6 +78,27 @@ class PayoutController extends Controller
             'reference'  => $bet->reference,
             'net_payout' => $bet->payout->net_payout,
         ]);
+
+        // Calculate updated on-hand cash for this teller
+        $tellerBets = Bet::where('teller_id', $user->id)
+            ->with('payout')
+            ->get();
+        
+        $totalCashIn = $tellerBets->sum('amount');
+        $totalPaidOut = $tellerBets
+            ->filter(fn($b) => $b->payout && $b->payout->status === 'paid')
+            ->sum(fn($b) => $b->payout->net_payout);
+        
+        $onHandCash = $totalCashIn - $totalPaidOut;
+
+        // Broadcast the update
+        broadcast(new TellerCashStatusUpdated(
+            $user->id,
+            $user->name,
+            $onHandCash,
+            'payout',
+            $bet->payout->net_payout
+        ));
 
         return response()->json([
             'message'    => 'Payout confirmed.',

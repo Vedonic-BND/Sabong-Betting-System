@@ -51,6 +51,7 @@
                            focus:outline-none focus:ring-2 focus:ring-gray-800">
                     <option value="admin" {{ old('role', $user->role) === 'admin' ? 'selected' : '' }}>Admin</option>
                     <option value="teller" {{ old('role', $user->role) === 'teller' ? 'selected' : '' }}>Teller</option>
+                    <option value="runner" {{ old('role', $user->role) === 'runner' ? 'selected' : '' }}>Runner</option>
                 </select>
             </div>
 
