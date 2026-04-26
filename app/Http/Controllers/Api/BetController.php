@@ -7,6 +7,7 @@ use App\Events\TellerCashStatusUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\Bet;
 use App\Models\Fight;
+use App\Models\TellerCash;
 use App\Services\AuditLogger;
 use App\Services\QrGenerator;
 use Illuminate\Http\Request;
@@ -18,9 +19,9 @@ class BetController extends Controller
     {
         $user = $request->user();
 
-        // Get bets for authenticated teller only
+        // Get bets for authenticated teller only with payout relationship
         $bets = Bet::where('teller_id', $user->id)
-            ->with('fight')
+            ->with(['fight', 'payout'])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -38,6 +39,13 @@ class BetController extends Controller
                     'date'         => $bet->created_at->format('M d, Y'),
                     'time'         => $bet->created_at->format('h:i A'),
                 ],
+                'winner'       => $bet->fight->winner,
+                'won'          => $bet->side === $bet->fight->winner,
+                'status'       => $bet->payout?->status ?? 'pending',
+                'gross_payout' => $bet->payout?->gross_payout ? number_format($bet->payout->gross_payout, 2) : null,
+                'net_payout'   => $bet->payout?->net_payout ? number_format($bet->payout->net_payout, 2) : null,
+                'payout_date'  => $bet->payout && $bet->payout->paid_at ? $bet->payout->paid_at->format('M d, Y') : null,
+                'payout_time'  => $bet->payout && $bet->payout->paid_at ? $bet->payout->paid_at->format('h:i A') : null,
                 'bet' => [
                     'id'           => $bet->id,
                     'reference'    => $bet->reference,
@@ -61,7 +69,7 @@ class BetController extends Controller
 
         $bet = Bet::where('reference', $reference)
             ->where('teller_id', $user->id)
-            ->with('fight')
+            ->with(['fight', 'payout'])
             ->first();
 
         if (!$bet) {
@@ -135,22 +143,13 @@ class BetController extends Controller
 
         broadcast(new BetPlaced($bet));
 
-        // Calculate and broadcast updated on-hand cash for this teller
-        $tellerBets = Bet::where('teller_id', $request->user()->id)
-            ->with('payout')
-            ->get();
-
-        $totalCashIn = $tellerBets->sum('amount');
-        $totalPaidOut = $tellerBets
-            ->filter(fn($b) => $b->payout && $b->payout->status === 'paid')
-            ->sum(fn($b) => $b->payout->net_payout);
-
-        $onHandCash = $totalCashIn - $totalPaidOut;
+        // Update and broadcast teller's on-hand cash
+        $tellerCash = TellerCash::updateTellerCash($request->user()->id);
 
         broadcast(new TellerCashStatusUpdated(
             $request->user()->id,
             $request->user()->name,
-            $onHandCash,
+            $tellerCash->on_hand_cash,
             'bet',
             $request->amount
         ));

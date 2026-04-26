@@ -5,8 +5,11 @@ namespace App\Http\Controllers\Api;
 use App\Events\FightUpdated;
 use App\Events\SideStatusUpdated;
 use App\Events\WinnerDeclared;
+use App\Events\TellerCashStatusUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\Fight;
+use App\Models\Bet;
+use App\Models\TellerCash;
 use App\Services\AuditLogger;
 use App\Services\PayoutCalculator;
 use Illuminate\Http\Request;
@@ -273,6 +276,28 @@ class FightController extends Controller
         AuditLogger::log('declared_winner', 'fight', $fight->id, [
             'winner' => $fight->winner,
         ]);
+
+        // Update TellerCash for all tellers with bets in this fight
+        $tellerIds = Bet::where('fight_id', $fight->id)
+            ->distinct('teller_id')
+            ->pluck('teller_id')
+            ->toArray();
+
+        foreach ($tellerIds as $tellerId) {
+            $tellerCash = TellerCash::updateTellerCash($tellerId);
+
+            // Get teller info for broadcast
+            $teller = \App\Models\User::find($tellerId);
+
+            // Broadcast cash status update for each affected teller
+            broadcast(new TellerCashStatusUpdated(
+                $tellerId,
+                $teller->name,
+                $tellerCash->on_hand_cash,
+                'winner_declared',
+                0
+            ));
+        }
 
         broadcast(new WinnerDeclared($fight));
 

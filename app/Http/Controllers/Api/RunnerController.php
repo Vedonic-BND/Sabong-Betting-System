@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\TellerCash;
 use App\Models\CashRequest;
 use App\Events\TellerCashStatusUpdated;
 use Illuminate\Http\Request;
@@ -17,23 +18,12 @@ class RunnerController extends Controller
     public function getTellersCashStatus(Request $request)
     {
         try {
-            // Get all tellers
+            // Get all tellers with their cash status
             $tellers = User::where('role', 'teller')->get();
 
             $tellersCashStatus = $tellers->map(function ($teller) {
-                // Calculate total cash in
-                $totalCashIn = CashRequest::where('teller_id', $teller->id)
-                    ->where('type', 'cash_in')
-                    ->where('status', 'completed')
-                    ->sum('amount');
-
-                // Calculate total cash out
-                $totalCashOut = CashRequest::where('teller_id', $teller->id)
-                    ->where('type', 'cash_out')
-                    ->where('status', 'completed')
-                    ->sum('amount');
-
-                $onHandCash = $totalCashIn - $totalCashOut;
+                // Get or create teller cash record and ensure it's up-to-date
+                $tellerCash = TellerCash::updateTellerCash($teller->id);
 
                 // Get last transaction date
                 $lastTransaction = CashRequest::where('teller_id', $teller->id)
@@ -44,7 +34,7 @@ class RunnerController extends Controller
                 return [
                     'id' => $teller->id,
                     'name' => $teller->name,
-                    'on_hand_cash' => (string)$onHandCash,
+                    'on_hand_cash' => (string)$tellerCash->on_hand_cash,
                     'last_transaction' => $lastTransaction ? $lastTransaction->updated_at->format('Y-m-d H:i:s') : null,
                 ];
             });

@@ -75,8 +75,8 @@ class CashRequestController extends Controller
                     'reason'       => $cashRequest->reason,
                     'status'       => $cashRequest->status,
                     'created_at'   => $cashRequest->created_at->format('M d, Y h:i A'),
-                    'approved_at'  => $cashRequest->approved_at?->format('M d, Y h:i A'),
-                    'completed_at' => $cashRequest->completed_at?->format('M d, Y h:i A'),
+                    'approved_at'  => $cashRequest->approved_at ? $cashRequest->approved_at->format('M d, Y h:i A') : null,
+                    'completed_at' => $cashRequest->completed_at ? $cashRequest->completed_at->format('M d, Y h:i A') : null,
                 ];
             }),
         ], 200);
@@ -106,8 +106,8 @@ class CashRequestController extends Controller
             'reason'       => $cashRequest->reason,
             'status'       => $cashRequest->status,
             'created_at'   => $cashRequest->created_at->format('M d, Y h:i A'),
-            'approved_at'  => $cashRequest->approved_at?->format('M d, Y h:i A'),
-            'completed_at' => $cashRequest->completed_at?->format('M d, Y h:i A'),
+            'approved_at'  => $cashRequest->approved_at ? $cashRequest->approved_at->format('M d, Y h:i A') : null,
+            'completed_at' => $cashRequest->completed_at ? $cashRequest->completed_at->format('M d, Y h:i A') : null,
         ], 200);
     }
 
