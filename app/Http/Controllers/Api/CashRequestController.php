@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Events\CashRequestCreated;
+use App\Events\RunnerAccepted;
 use App\Http\Controllers\Controller;
 use App\Models\CashRequest;
 use App\Services\AuditLogger;
@@ -140,6 +141,9 @@ class CashRequestController extends Controller
         AuditLogger::log('approved_cash_request', 'cash_request', $cashRequest->id, [
             'runner' => $user->name,
         ]);
+
+        // Broadcast to teller that runner accepted the request
+        broadcast(new RunnerAccepted($cashRequest));
 
         return response()->json([
             'message' => 'Cash request approved.',
