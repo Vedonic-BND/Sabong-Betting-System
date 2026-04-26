@@ -115,4 +115,33 @@ class PayoutController extends Controller
             'last_updated' => $tellerCash->last_updated->format('Y-m-d H:i:s'),
         ]);
     }
+
+    // GET /api/teller/runner-transactions
+    public function getRunnerTransactions(Request $request)
+    {
+        $user = $request->user();
+
+        // Get all runner transactions for this teller
+        $transactions = \App\Models\CashRequest::where('teller_id', $user->id)
+            ->where('status', 'completed')
+            ->orderBy('updated_at', 'desc')
+            ->get()
+            ->map(function ($transaction) {
+                $date = $transaction->updated_at->format('Y-m-d');
+                $time = $transaction->updated_at->format('H:i:s');
+
+                return [
+                    'id' => $transaction->id,
+                    'runner_name' => $transaction->runner->name ?? 'Unknown',
+                    'teller_name' => $transaction->teller->name ?? 'Unknown',
+                    'amount' => (string)$transaction->amount,
+                    'type' => $transaction->type,
+                    'status' => $transaction->status,
+                    'date' => $date,
+                    'time' => $time,
+                ];
+            });
+
+        return response()->json($transactions);
+    }
 }
