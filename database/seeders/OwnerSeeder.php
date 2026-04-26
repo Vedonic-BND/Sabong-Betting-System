@@ -39,6 +39,13 @@ class OwnerSeeder extends Seeder
         ]);
 
         User::create([
+            'name'     => 'Runner 2',
+            'username' => 'runner2',
+            'password' => Hash::make('runner1234'),
+            'role'     => 'runner',
+        ]);
+
+        User::create([
             'name'     => 'Admin',
             'username' => 'admin',
             'password' => Hash::make('admin1234'),

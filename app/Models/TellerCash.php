@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Models\Bet;
 use App\Models\Payout;
+use App\Models\CashRequest;
 
 class TellerCash extends Model
 {
@@ -38,13 +39,30 @@ class TellerCash extends Model
     {
         try {
             // Calculate total cash in from bets
-            $totalCashIn = Bet::where('teller_id', $tellerId)->sum('amount');
+            $totalCashInFromBets = Bet::where('teller_id', $tellerId)->sum('amount');
 
             // Calculate total paid out using join through Bet
-            $totalPaidOut = Payout::join('bets', 'payouts.bet_id', '=', 'bets.id')
+            $totalPaidOutFromBets = Payout::join('bets', 'payouts.bet_id', '=', 'bets.id')
                 ->where('bets.teller_id', $tellerId)
                 ->where('payouts.status', 'paid')
                 ->sum('payouts.net_payout');
+
+            // Calculate cash from runner transactions (collect/provide)
+            $totalCashInFromRunner = \App\Models\CashRequest::where('teller_id', $tellerId)
+                ->where('type', 'cash_in')
+                ->where('status', 'completed')
+                ->sum('amount');
+
+            $totalCashOutFromRunner = \App\Models\CashRequest::where('teller_id', $tellerId)
+                ->where('type', 'cash_out')
+                ->where('status', 'completed')
+                ->sum('amount');
+
+            // Total cash in = bets + runner cash in
+            $totalCashIn = $totalCashInFromBets + $totalCashInFromRunner;
+
+            // Total paid out = payouts from bets + runner cash out
+            $totalPaidOut = $totalPaidOutFromBets + $totalCashOutFromRunner;
 
             $onHandCash = $totalCashIn - $totalPaidOut;
 

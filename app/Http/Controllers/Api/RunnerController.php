@@ -96,12 +96,24 @@ class RunnerController extends Controller
         try {
             $validated = $request->validate([
                 'teller_id' => ['required', 'integer', 'exists:users,id'],
-                'amount' => ['required', 'numeric', 'min:0'],
+                'amount' => ['required', 'numeric', 'min:0.01'],
                 'type' => ['required', 'in:cash_in,cash_out'],
             ]);
 
             $runnerUser = auth()->user();
             $teller = User::find($validated['teller_id']);
+
+            // For collect (cash_out): validate that teller has enough on-hand cash
+            if ($validated['type'] === 'cash_out') {
+                $currentTellerCash = TellerCash::where('teller_id', $teller->id)->first();
+                $tellerOnHandCash = $currentTellerCash ? $currentTellerCash->on_hand_cash : 0;
+
+                if ($validated['amount'] > $tellerOnHandCash) {
+                    return response()->json([
+                        'message' => "Teller only has ₱" . number_format($tellerOnHandCash, 2) . " on-hand. Cannot collect ₱" . number_format($validated['amount'], 2) . ".",
+                    ], 422);
+                }
+            }
 
             // Create cash request
             $cashRequest = CashRequest::create([
@@ -113,24 +125,44 @@ class RunnerController extends Controller
                 'reason' => 'Processed by runner',
             ]);
 
-            // Calculate new on-hand cash for teller
-            $totalCashIn = CashRequest::where('teller_id', $teller->id)
-                ->where('type', 'cash_in')
-                ->where('status', 'completed')
-                ->sum('amount');
+            // Ensure TellerCash record exists
+            $tellerCash = TellerCash::firstOrCreate(
+                ['teller_id' => $teller->id],
+                [
+                    'total_cash_in' => 0,
+                    'total_paid_out' => 0,
+                    'on_hand_cash' => 0,
+                    'last_updated' => now(),
+                ]
+            );
 
-            $totalCashOut = CashRequest::where('teller_id', $teller->id)
-                ->where('type', 'cash_out')
-                ->where('status', 'completed')
-                ->sum('amount');
+            // Update teller's on-hand cash based on transaction type using raw update
+            if ($validated['type'] === 'cash_out') {
+                // COLLECT: Reduce teller's on-hand cash
+                \DB::table('teller_cash')
+                    ->where('teller_id', $teller->id)
+                    ->update([
+                        'on_hand_cash' => \DB::raw('GREATEST(0, on_hand_cash - ' . $validated['amount'] . ')'),
+                        'last_updated' => now(),
+                    ]);
+            } else {
+                // PROVIDE: Increase teller's on-hand cash
+                \DB::table('teller_cash')
+                    ->where('teller_id', $teller->id)
+                    ->update([
+                        'on_hand_cash' => \DB::raw('on_hand_cash + ' . $validated['amount']),
+                        'last_updated' => now(),
+                    ]);
+            }
 
-            $onHandCash = $totalCashIn - $totalCashOut;
+            // Refresh to get updated values
+            $updatedTellerCash = TellerCash::where('teller_id', $teller->id)->first();
 
-            // Broadcast event to runners
-            event(new TellerCashStatusUpdated(
+            // Broadcast event to runners with updated on-hand cash
+            broadcast(new TellerCashStatusUpdated(
                 $teller->id,
                 $teller->name,
-                $onHandCash,
+                $updatedTellerCash->on_hand_cash,
                 $validated['type'],
                 $validated['amount']
             ));
@@ -147,6 +179,7 @@ class RunnerController extends Controller
                 'status' => $cashRequest->status,
                 'date' => $date,
                 'time' => $time,
+                'teller_on_hand_cash' => (string)$updatedTellerCash->on_hand_cash,
             ], 201);
         } catch (\Exception $e) {
             return response()->json([

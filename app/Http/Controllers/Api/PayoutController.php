@@ -97,4 +97,22 @@ class PayoutController extends Controller
             'net_payout' => $bet->payout->net_payout,
         ]);
     }
+
+    // GET /api/teller/cash-status
+    public function getTellerCashStatus(Request $request)
+    {
+        $user = $request->user();
+
+        // Get or update teller cash
+        $tellerCash = TellerCash::updateTellerCash($user->id);
+
+        return response()->json([
+            'teller_id' => $user->id,
+            'teller_name' => $user->name,
+            'total_cash_in' => (string)$tellerCash->total_cash_in,
+            'total_paid_out' => (string)$tellerCash->total_paid_out,
+            'on_hand_cash' => (string)$tellerCash->on_hand_cash,
+            'last_updated' => $tellerCash->last_updated->format('Y-m-d H:i:s'),
+        ]);
+    }
 }
