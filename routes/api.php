@@ -2,11 +2,12 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BetController;
-use App\Http\Controllers\Api\CashRequestController;
 use App\Http\Controllers\Api\DeviceController;
 use App\Http\Controllers\Api\FightController;
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PayoutController;
 use App\Http\Controllers\Api\RunnerController;
+use App\Http\Controllers\Api\RunnerAssistanceController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -72,33 +73,27 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     /*
     |----------------------------------------------------------------------
-    | CASH OUT (Teller only)
+    | NOTIFICATIONS
     |----------------------------------------------------------------------
     */
-    Route::middleware('role:teller')->group(function () {
-        Route::get('/payout/{reference}', [PayoutController::class, 'show']);
-        Route::post('/payout/{reference}', [PayoutController::class, 'confirm']);
-        Route::get('/teller/cash-status', [PayoutController::class, 'getTellerCashStatus']);
-        Route::get('/teller/runner-transactions', [PayoutController::class, 'getRunnerTransactions']);
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/notifications', [NotificationController::class, 'store']);
+        Route::get('/notifications', [NotificationController::class, 'index']);
+        Route::patch('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+        Route::delete('/notifications', [NotificationController::class, 'clear']);
     });
 
     /*
     |----------------------------------------------------------------------
-    | CASH REQUESTS (Teller, Runner, Admin, Owner)
+    | RUNNER ASSISTANCE (Teller and Runner)
     |----------------------------------------------------------------------
     */
-    // Teller creates cash request
-    Route::middleware('role:teller')->group(function () {
-        Route::post('/cash-request', [CashRequestController::class, 'store']);
-    });
+    Route::middleware('auth:sanctum')->group(function () {
+        // Teller requests assistance
+        Route::post('/assistance/request', [RunnerAssistanceController::class, 'request']);
 
-    // Runner and Owner view and manage cash requests
-    Route::middleware(['checkRoles:runner|admin|owner'])->group(function () {
-        Route::get('/cash-requests', [CashRequestController::class, 'index']);
-        Route::get('/cash-request/{id}', [CashRequestController::class, 'show']);
-        Route::patch('/cash-request/{id}/approve', [CashRequestController::class, 'approve']);
-        Route::patch('/cash-request/{id}/complete', [CashRequestController::class, 'complete']);
-        Route::patch('/cash-request/{id}/reject', [CashRequestController::class, 'reject']);
+        // Runner accepts assistance
+        Route::post('/assistance/accept/{teller_id}', [RunnerAssistanceController::class, 'accept']);
     });
 
     /*
@@ -110,6 +105,16 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/runner/tellers', [RunnerController::class, 'getTellersCashStatus']);
         Route::get('/runner/history', [RunnerController::class, 'getHistory']);
         Route::post('/runner/transaction', [RunnerController::class, 'createTransaction']);
+    });
+
+    /*
+    |----------------------------------------------------------------------
+    | DEBUG/TEST endpoints
+    |----------------------------------------------------------------------
+    */
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::get('/test/create-notification', [\App\Http\Controllers\Api\TestController::class, 'createTestNotification']);
+        Route::get('/test/notifications', [\App\Http\Controllers\Api\TestController::class, 'listNotifications']);
     });
 
 });

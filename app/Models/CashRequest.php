@@ -15,6 +15,8 @@ class CashRequest extends Model
         'type',           // 'cash_in' or 'cash_out'
         'amount',
         'reason',
+        'request_type',   // 'assistance', 'need_cash', 'collect_cash', 'other'
+        'custom_message', // For 'other' request type
         'status',         // 'pending', 'approved', 'completed', 'rejected'
         'approved_at',
         'completed_at',

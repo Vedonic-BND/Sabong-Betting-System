@@ -35,12 +35,14 @@ class CashRequestCreated implements ShouldBroadcast
     public function broadcastWith(): array
     {
         return [
-            'id'           => $this->cashRequest->id,
-            'teller_name'  => $this->cashRequest->teller->name,
-            'type'         => $this->cashRequest->type,
-            'amount'       => $this->cashRequest->amount,
-            'status'       => $this->cashRequest->status,
-            'created_at'   => $this->cashRequest->created_at,
+            'id'              => $this->cashRequest->id,
+            'teller_name'     => $this->cashRequest->teller->name,
+            'type'            => $this->cashRequest->type,
+            'amount'          => $this->cashRequest->amount,
+            'status'          => $this->cashRequest->status,
+            'request_type'    => $this->cashRequest->request_type,
+            'custom_message'  => $this->cashRequest->custom_message,
+            'created_at'      => $this->cashRequest->created_at,
         ];
     }
 }

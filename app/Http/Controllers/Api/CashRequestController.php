@@ -6,18 +6,35 @@ use App\Events\CashRequestCreated;
 use App\Events\RunnerAccepted;
 use App\Http\Controllers\Controller;
 use App\Models\CashRequest;
+use App\Models\Notification;
 use App\Services\AuditLogger;
 use Illuminate\Http\Request;
 
 class CashRequestController extends Controller
 {
+    /**
+     * Generate a user-friendly message based on request type
+     */
+    private function getRequestMessage(string $requestType, ?string $customMessage = null): string
+    {
+        return match ($requestType) {
+            'assistance' => 'Assistance needed at counter',
+            'need_cash' => 'Runner needed - Need cash',
+            'collect_cash' => 'Runner needed - Collect excess cash',
+            'other' => "Custom request: {$customMessage}",
+            default => 'Runner assistance needed',
+        };
+    }
+
     // POST /api/cash-request — Teller requests cash
     public function store(Request $request)
     {
         $request->validate([
-            'type'   => ['required', 'in:cash_in,cash_out'],
-            'amount' => ['required', 'numeric', 'min:1'],
-            'reason' => ['nullable', 'string', 'max:255'],
+            'type'            => ['required', 'in:cash_in,cash_out'],
+            'amount'          => ['nullable', 'numeric', 'min:0'],
+            'reason'          => ['nullable', 'string', 'max:255'],
+            'request_type'    => ['required', 'in:assistance,need_cash,collect_cash,other'],
+            'custom_message'  => ['nullable', 'string', 'max:500'],
         ]);
 
         $user = $request->user();
@@ -27,21 +44,48 @@ class CashRequestController extends Controller
             return response()->json(['message' => 'Only tellers can request cash.'], 403);
         }
 
+        $customMessage = $request->request_type === 'other' ? $request->custom_message : null;
+
         $cashRequest = CashRequest::create([
-            'teller_id' => $user->id,
-            'type'      => $request->type,
-            'amount'    => $request->amount,
-            'reason'    => $request->reason,
-            'status'    => 'pending',
+            'teller_id'      => $user->id,
+            'type'           => $request->type,
+            'amount'         => $request->amount ?? 0,
+            'reason'         => $request->reason,
+            'request_type'   => $request->request_type,
+            'custom_message' => $customMessage,
+            'status'         => 'pending',
         ]);
 
         AuditLogger::log('created_cash_request', 'cash_request', $cashRequest->id, [
-            'type'   => $request->type,
-            'amount' => $request->amount,
+            'type'         => $request->type,
+            'amount'       => $request->amount,
+            'request_type' => $request->request_type,
         ]);
 
         // Broadcast to runners and owner
         broadcast(new CashRequestCreated($cashRequest));
+
+        // Save notification for all runners
+        $runners = \App\Models\User::where('role', 'runner')->get();
+        foreach ($runners as $runner) {
+            $messageText = $this->getRequestMessage($request->request_type, $customMessage);
+
+            Notification::create([
+                'user_id' => $runner->id,
+                'title' => 'Runner Request',
+                'message' => $messageText,
+                'data' => json_encode([
+                    'teller_id' => $user->id,
+                    'teller_name' => $user->name,
+                    'cash_request_id' => $cashRequest->id,
+                    'type' => $cashRequest->type,
+                    'amount' => $cashRequest->amount,
+                    'request_type' => $cashRequest->request_type,
+                    'custom_message' => $customMessage,
+                ]),
+                'is_read' => false,
+            ]);
+        }
 
         return response()->json([
             'message'  => 'Cash request created.',
@@ -144,6 +188,45 @@ class CashRequestController extends Controller
 
         // Broadcast to teller that runner accepted the request
         broadcast(new RunnerAccepted($cashRequest));
+
+        // Save notification for the teller
+        Notification::create([
+            'user_id' => $cashRequest->teller_id,
+            'title' => 'Runner Accepted',
+            'message' => "{$user->name} is on the way to assist you.",
+            'data' => json_encode([
+                'runner_id' => $user->id,
+                'runner_name' => $user->name,
+                'cash_request_id' => $cashRequest->id,
+                'type' => $cashRequest->type,
+                'amount' => $cashRequest->amount,
+            ]),
+            'is_read' => false,
+        ]);
+
+        // Notify other runners that this runner is assigned
+        $otherRunners = \App\Models\User::where('role', 'runner')
+            ->where('id', '!=', $user->id)
+            ->get();
+
+        foreach ($otherRunners as $runner) {
+            Notification::create([
+                'user_id' => $runner->id,
+                'title' => 'Request Assigned',
+                'message' => "{$user->name} has been assigned to teller {$cashRequest->teller->name}.",
+                'data' => json_encode([
+                    'assigned_runner_id' => $user->id,
+                    'assigned_runner_name' => $user->name,
+                    'teller_id' => $cashRequest->teller_id,
+                    'cash_request_id' => $cashRequest->id,
+                ]),
+                'is_read' => false,
+            ]);
+        }
+
+        // Dispatch job to reset assignment after 30 seconds if not completed
+        dispatch(new \App\Jobs\ResetRunnerAssignment($cashRequest->id))
+            ->delay(now()->addSeconds(30));
 
         return response()->json([
             'message' => 'Cash request approved.',
