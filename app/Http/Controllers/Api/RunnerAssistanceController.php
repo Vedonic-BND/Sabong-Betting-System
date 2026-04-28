@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Notification;
 use App\Models\User;
+use App\Models\CashRequest;
+use App\Events\CashRequestCreated;
+use App\Events\RunnerAccepted;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
@@ -30,10 +33,21 @@ class RunnerAssistanceController extends Controller
         // Get the message to display
         $message = $this->getRequestMessage($request->request_type, $request->custom_message);
 
-        // Get all runners
-        $runners = User::where('role', 'runner')->get();
+        // Create a CashRequest record to trigger the broadcast event
+        $cashRequest = CashRequest::create([
+            'teller_id' => $user->id,
+            'request_type' => $request->request_type,
+            'custom_message' => $request->custom_message,
+            'type' => 'cash_in',
+            'amount' => 0,
+            'status' => 'pending',
+        ]);
 
-        // Send notification to all runners
+        // Broadcast the event to all runners via WebSocket
+        event(new CashRequestCreated($cashRequest));
+
+        // Also save notifications to database for history
+        $runners = User::where('role', 'runner')->get();
         foreach ($runners as $runner) {
             Notification::create([
                 'user_id' => $runner->id,
@@ -87,6 +101,20 @@ class RunnerAssistanceController extends Controller
             'id' => $user->id,
             'name' => $user->name,
         ], 15);
+
+        // Create CashRequest record and broadcast event
+        $cashRequest = CashRequest::create([
+            'teller_id' => $teller->id,
+            'runner_id' => $user->id,
+            'request_type' => 'assistance',
+            'type' => 'cash_in',
+            'amount' => 0,
+            'status' => 'accepted',
+            'approved_at' => now(),
+        ]);
+
+        // Broadcast acceptance to other runners
+        event(new RunnerAccepted($cashRequest));
 
         // Notify the teller
         Notification::create([

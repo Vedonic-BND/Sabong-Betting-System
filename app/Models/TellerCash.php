@@ -34,44 +34,54 @@ class TellerCash extends Model
 
     /**
      * Update teller cash totals
+     * 
+     * Logic:
+     * - Teller RECEIVES bets from bettors (increases on_hand_cash)
+     * - Teller PAYS OUT winnings (decreases on_hand_cash)
+     * - Runner provides cash_in (increases on_hand_cash)
+     * - Runner collects cash_out (decreases on_hand_cash)
+     * 
+     * on_hand_cash = (Bets Received + CashIn from Runner) - (Payouts Paid + CashOut to Runner)
      */
     public static function updateTellerCash(int $tellerId): self
     {
         try {
-            // Calculate total cash in from bets
-            $totalCashInFromBets = Bet::where('teller_id', $tellerId)->sum('amount');
+            // Calculate total cash IN (money teller receives):
+            // 1. All bets placed by bettors with this teller
+            $totalBetsReceived = Bet::where('teller_id', $tellerId)->sum('amount');
 
-            // Calculate total paid out using join through Bet
-            $totalPaidOutFromBets = Payout::join('bets', 'payouts.bet_id', '=', 'bets.id')
-                ->where('bets.teller_id', $tellerId)
-                ->where('payouts.status', 'paid')
-                ->sum('payouts.net_payout');
-
-            // Calculate cash from runner transactions (collect/provide)
+            // 2. Cash provided by runner (cash_in from runner transactions)
             $totalCashInFromRunner = \App\Models\CashRequest::where('teller_id', $tellerId)
                 ->where('type', 'cash_in')
                 ->where('status', 'completed')
                 ->sum('amount');
 
+            $totalCashIn = $totalBetsReceived + $totalCashInFromRunner;
+
+            // Calculate total cash OUT (money teller pays out):
+            // 1. Payouts from won bets
+            $totalPayoutsPaid = Payout::join('bets', 'payouts.bet_id', '=', 'bets.id')
+                ->where('bets.teller_id', $tellerId)
+                ->where('payouts.status', 'paid')
+                ->sum('payouts.net_payout');
+
+            // 2. Cash collected by runner (cash_out from runner transactions)
             $totalCashOutFromRunner = \App\Models\CashRequest::where('teller_id', $tellerId)
                 ->where('type', 'cash_out')
                 ->where('status', 'completed')
                 ->sum('amount');
 
-            // Total cash in = bets + runner cash in
-            $totalCashIn = $totalCashInFromBets + $totalCashInFromRunner;
+            $totalCashOut = $totalPayoutsPaid + $totalCashOutFromRunner;
 
-            // Total paid out = payouts from bets + runner cash out
-            $totalPaidOut = $totalPaidOutFromBets + $totalCashOutFromRunner;
-
-            $onHandCash = $totalCashIn - $totalPaidOut;
+            // On-hand cash = Total In - Total Out
+            $onHandCash = max(0, $totalCashIn - $totalCashOut);
 
             $tellerCash = self::updateOrCreate(
                 ['teller_id' => $tellerId],
                 [
                     'total_cash_in' => $totalCashIn,
-                    'total_paid_out' => $totalPaidOut,
-                    'on_hand_cash' => max(0, $onHandCash),
+                    'total_paid_out' => $totalCashOut,
+                    'on_hand_cash' => $onHandCash,
                     'last_updated' => now(),
                 ]
             );

@@ -36,7 +36,9 @@ class RunnerAccepted implements ShouldBroadcast
     {
         return [
             'id'              => $this->cashRequest->id,
+            'runner_id'       => $this->cashRequest->runner_id,
             'runner_name'     => $this->cashRequest->runner?->name,
+            'teller_id'       => $this->cashRequest->teller_id,
             'teller_name'     => $this->cashRequest->teller->name,
             'type'            => $this->cashRequest->type,
             'amount'          => $this->cashRequest->amount,

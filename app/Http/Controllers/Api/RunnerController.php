@@ -105,8 +105,9 @@ class RunnerController extends Controller
 
             // For collect (cash_out): validate that teller has enough on-hand cash
             if ($validated['type'] === 'cash_out') {
-                $currentTellerCash = TellerCash::where('teller_id', $teller->id)->first();
-                $tellerOnHandCash = $currentTellerCash ? $currentTellerCash->on_hand_cash : 0;
+                // Ensure TellerCash is up-to-date before checking
+                $currentTellerCash = TellerCash::updateTellerCash($teller->id);
+                $tellerOnHandCash = $currentTellerCash->on_hand_cash;
 
                 if ($validated['amount'] > $tellerOnHandCash) {
                     return response()->json([

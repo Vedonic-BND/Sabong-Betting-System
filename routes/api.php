@@ -98,6 +98,20 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     /*
     |----------------------------------------------------------------------
+    | PAYOUT (Tellers - view/confirm payouts)
+    |----------------------------------------------------------------------
+    */
+    Route::middleware('role:teller')->group(function () {
+        Route::get('/payout/{reference}', [PayoutController::class, 'show']);
+        Route::post('/payout/{reference}', [PayoutController::class, 'confirm']);
+        
+        // Teller cash management
+        Route::get('/teller/cash-status', [PayoutController::class, 'getTellerCashStatus']);
+        Route::get('/teller/runner-transactions', [PayoutController::class, 'getRunnerTransactions']);
+    });
+
+    /*
+    |----------------------------------------------------------------------
     | RUNNER only
     |----------------------------------------------------------------------
     */

@@ -36,6 +36,7 @@ class CashRequestCreated implements ShouldBroadcast
     {
         return [
             'id'              => $this->cashRequest->id,
+            'teller_id'       => $this->cashRequest->teller_id,
             'teller_name'     => $this->cashRequest->teller->name,
             'type'            => $this->cashRequest->type,
             'amount'          => $this->cashRequest->amount,
