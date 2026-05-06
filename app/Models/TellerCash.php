@@ -34,13 +34,13 @@ class TellerCash extends Model
 
     /**
      * Update teller cash totals
-     * 
+     *
      * Logic:
      * - Teller RECEIVES bets from bettors (increases on_hand_cash)
      * - Teller PAYS OUT winnings (decreases on_hand_cash)
      * - Runner provides cash_in (increases on_hand_cash)
      * - Runner collects cash_out (decreases on_hand_cash)
-     * 
+     *
      * on_hand_cash = (Bets Received + CashIn from Runner) - (Payouts Paid + CashOut to Runner)
      */
     public static function updateTellerCash(int $tellerId): self

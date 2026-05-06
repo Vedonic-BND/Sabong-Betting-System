@@ -30,6 +30,16 @@ class RunnerAssistanceController extends Controller
             return response()->json(['message' => 'Only tellers can request assistance.'], 403);
         }
 
+        // Check if teller is in cooldown (just accepted a request 30 seconds ago)
+        $tellerCooldownKey = "teller_cooldown_{$user->id}";
+        if (Cache::has($tellerCooldownKey)) {
+            // Default to 30 seconds if we can't get exact remaining time
+            return response()->json([
+                'message' => 'Please wait before sending another request.',
+                'retry_after_seconds' => 30,
+            ], 429); // Too Many Requests
+        }
+
         // Get the message to display
         $message = $this->getRequestMessage($request->request_type, $request->custom_message);
 
@@ -76,31 +86,52 @@ class RunnerAssistanceController extends Controller
     {
         $user = $request->user();
 
+        \Log::info("Accept request - Runner ID: {$user->id}, Teller ID: {$tellerId}");
+
         // Only runners can accept
         if ($user->role !== 'runner') {
+            \Log::warning("Accept rejected - user is not runner: {$user->role}");
             return response()->json(['message' => 'Only runners can accept requests.'], 403);
         }
 
         $teller = User::find($tellerId);
         if (!$teller || $teller->role !== 'teller') {
+            \Log::warning("Accept rejected - teller not found or not teller role: {$tellerId}");
             return response()->json(['message' => 'Teller not found.'], 404);
         }
 
-        // Check if teller is already assigned to another runner
-        $cacheKey = "teller_assigned_{$tellerId}";
-        if (Cache::has($cacheKey)) {
-            $assignedRunner = Cache::get($cacheKey);
+        // Check if someone already accepted this request (prevents race condition)
+        $lockKey = "teller_request_lock_{$tellerId}";
+        $assignmentKey = "teller_assigned_{$tellerId}";
+
+        // Try to acquire lock
+        $assignedRunner = Cache::get($assignmentKey);
+        if ($assignedRunner !== null) {
+            \Log::warning("Request already accepted by runner: {$assignedRunner['id']} for teller: {$tellerId}");
             return response()->json([
-                'message' => "Teller is already assigned to {$assignedRunner['name']}.",
-                'assigned_runner' => $assignedRunner['name'],
-            ], 422);
+                'message' => 'Request already accepted by another runner.',
+                'assigned_to' => $assignedRunner['name'],
+            ], 409); // Conflict
         }
 
-        // Assign this runner to the teller for 15 seconds
-        Cache::put($cacheKey, [
+        // Atomically set the assignment (only if not already set)
+        $isSet = Cache::add($assignmentKey, [
             'id' => $user->id,
             'name' => $user->name,
-        ], 15);
+        ], 30); // 30 seconds timeout
+
+        if (!$isSet) {
+            \Log::warning("Failed to acquire lock for teller {$tellerId} - already assigned");
+            $assignedRunner = Cache::get($assignmentKey);
+            return response()->json([
+                'message' => 'Request already accepted by another runner.',
+                'assigned_to' => $assignedRunner['name'] ?? 'Unknown',
+            ], 409); // Conflict
+        }
+
+        // Also block the teller from sending new requests for 30 seconds
+        $tellerLockKey = "teller_cooldown_{$tellerId}";
+        Cache::put($tellerLockKey, true, 30);
 
         // Create CashRequest record and broadcast event
         $cashRequest = CashRequest::create([
@@ -109,8 +140,9 @@ class RunnerAssistanceController extends Controller
             'request_type' => 'assistance',
             'type' => 'cash_in',
             'amount' => 0,
-            'status' => 'accepted',
+            'status' => 'approved',
             'approved_at' => now(),
+            'approved_by' => $user->id,
         ]);
 
         // Broadcast acceptance to other runners
@@ -122,6 +154,8 @@ class RunnerAssistanceController extends Controller
             'title' => 'Runner Accepted',
             'message' => "{$user->name} is on the way.",
             'data' => json_encode([
+                'teller_id' => $teller->id,
+                'teller_name' => $teller->name,
                 'runner_id' => $user->id,
                 'runner_name' => $user->name,
                 'accepted_at' => now()->timestamp,
@@ -150,8 +184,8 @@ class RunnerAssistanceController extends Controller
         }
 
         return response()->json([
-            'message' => 'Request accepted. You are assigned for 15 seconds.',
-            'assigned_until' => now()->addSeconds(15),
+            'message' => 'Request accepted. You are assigned for 30 seconds.',
+            'assigned_until' => now()->addSeconds(30),
         ], 200);
     }
 

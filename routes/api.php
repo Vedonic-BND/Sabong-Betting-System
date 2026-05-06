@@ -93,7 +93,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/assistance/request', [RunnerAssistanceController::class, 'request']);
 
         // Runner accepts assistance
-        Route::post('/assistance/accept/{teller_id}', [RunnerAssistanceController::class, 'accept']);
+        Route::post('/assistance/accept/{tellerId}', [RunnerAssistanceController::class, 'accept']);
     });
 
     /*
@@ -104,7 +104,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::middleware('role:teller')->group(function () {
         Route::get('/payout/{reference}', [PayoutController::class, 'show']);
         Route::post('/payout/{reference}', [PayoutController::class, 'confirm']);
-        
+
         // Teller cash management
         Route::get('/teller/cash-status', [PayoutController::class, 'getTellerCashStatus']);
         Route::get('/teller/runner-transactions', [PayoutController::class, 'getRunnerTransactions']);
