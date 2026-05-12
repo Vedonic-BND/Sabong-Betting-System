@@ -98,6 +98,16 @@ Route::middleware(['auth', 'role:owner'])
         Route::get('/audit-logs/export', [ExportController::class, 'auditLogs'])
             ->name('audit-logs.export');
 
+        // notifications
+        Route::get('/notifications', [\App\Http\Controllers\Owner\NotificationController::class, 'index'])
+            ->name('notifications.index');
+        Route::patch('/notifications/{notification}/read', [\App\Http\Controllers\Owner\NotificationController::class, 'markAsRead'])
+            ->name('notifications.mark-read');
+        Route::delete('/notifications/{notification}', [\App\Http\Controllers\Owner\NotificationController::class, 'delete'])
+            ->name('notifications.delete');
+        Route::delete('/notifications', [\App\Http\Controllers\Owner\NotificationController::class, 'clear'])
+            ->name('notifications.clear');
+
         // live stats endpoint
         Route::get('/stats', function () {
             return response()->json([

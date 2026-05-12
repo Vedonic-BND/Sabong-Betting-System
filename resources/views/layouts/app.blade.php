@@ -146,6 +146,14 @@
                 <span :class="sidebarOpen ? 'opacity-100' : 'opacity-0 hidden'" class="transition-opacity duration-300">Audit Logs</span>
             </a>
 
+            <a href="{{ route('owner.notifications.index') }}"
+                :title="!sidebarOpen ? 'Requests' : ''"
+                class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-700 dark:hover:bg-gray-800 text-sm whitespace-nowrap transition
+                {{ request()->routeIs('owner.notifications.*') ? 'bg-gray-700 dark:bg-gray-800 text-white' : 'text-gray-300 dark:text-gray-400' }}">
+                <span class="flex-shrink-0">🔔</span>
+                <span :class="sidebarOpen ? 'opacity-100' : 'opacity-0 hidden'" class="transition-opacity duration-300">Requests</span>
+            </a>
+
             <hr class="my-2 border-gray-700 dark:border-gray-800">
 
             <a href="{{ route('owner.profile.show') }}"

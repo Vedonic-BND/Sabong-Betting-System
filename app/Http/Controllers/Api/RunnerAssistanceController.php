@@ -53,26 +53,8 @@ class RunnerAssistanceController extends Controller
             'status' => 'pending',
         ]);
 
-        // Broadcast the event to all runners via WebSocket
+        // Broadcast the event to all runners via WebSocket (no database save until acceptance)
         event(new CashRequestCreated($cashRequest));
-
-        // Also save notifications to database for history
-        $runners = User::where('role', 'runner')->get();
-        foreach ($runners as $runner) {
-            Notification::create([
-                'user_id' => $runner->id,
-                'title' => 'Assistance Needed',
-                'message' => "{$user->name} - {$message}",
-                'data' => json_encode([
-                    'teller_id' => $user->id,
-                    'teller_name' => $user->name,
-                    'request_type' => $request->request_type,
-                    'custom_message' => $request->custom_message,
-                    'timestamp' => now()->timestamp,
-                ]),
-                'is_read' => false,
-            ]);
-        }
 
         return response()->json([
             'message' => 'Assistance request sent to all runners.',
@@ -145,10 +127,10 @@ class RunnerAssistanceController extends Controller
             'approved_by' => $user->id,
         ]);
 
-        // Broadcast acceptance to other runners
+        // Broadcast acceptance to other runners (no database save for other runners' notifications)
         event(new RunnerAccepted($cashRequest));
 
-        // Notify the teller
+        // Save notification only for the teller - record the successful acceptance
         Notification::create([
             'user_id' => $teller->id,
             'title' => 'Runner Accepted',
@@ -163,21 +145,35 @@ class RunnerAssistanceController extends Controller
             'is_read' => false,
         ]);
 
-        // Notify other runners
-        $otherRunners = User::where('role', 'runner')
-            ->where('id', '!=', $user->id)
-            ->get();
+        // Save notification for the runner - record their successful acceptance
+        Notification::create([
+            'user_id' => $user->id,
+            'title' => 'Request Accepted',
+            'message' => "You have accepted the request from {$teller->name}.",
+            'data' => json_encode([
+                'teller_id' => $teller->id,
+                'teller_name' => $teller->name,
+                'runner_id' => $user->id,
+                'runner_name' => $user->name,
+                'accepted_at' => now()->timestamp,
+            ]),
+            'is_read' => false,
+        ]);
 
-        foreach ($otherRunners as $runner) {
+        // Save notification to all owners - record successful assignment for monitoring
+        $owners = User::where('role', 'owner')->get();
+        foreach ($owners as $owner) {
             Notification::create([
-                'user_id' => $runner->id,
-                'title' => 'Request Assigned',
-                'message' => "{$user->name} has been assigned to {$teller->name}.",
+                'user_id' => $owner->id,
+                'title' => 'Assignment Successful',
+                'message' => "{$user->name} assigned to {$teller->name}",
                 'data' => json_encode([
-                    'assigned_runner_id' => $user->id,
-                    'assigned_runner_name' => $user->name,
                     'teller_id' => $teller->id,
                     'teller_name' => $teller->name,
+                    'runner_id' => $user->id,
+                    'runner_name' => $user->name,
+                    'request_type' => 'assistance',
+                    'assigned_at' => now()->timestamp,
                 ]),
                 'is_read' => false,
             ]);
