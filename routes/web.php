@@ -99,6 +99,8 @@ Route::middleware(['auth', 'role:owner'])
             ->name('audit-logs.export');
 
         // notifications
+        Route::get('/notifications/export', [\App\Http\Controllers\Owner\NotificationController::class, 'export'])
+            ->name('notifications.export');
         Route::get('/notifications', [\App\Http\Controllers\Owner\NotificationController::class, 'index'])
             ->name('notifications.index');
         Route::patch('/notifications/{notification}/read', [\App\Http\Controllers\Owner\NotificationController::class, 'markAsRead'])

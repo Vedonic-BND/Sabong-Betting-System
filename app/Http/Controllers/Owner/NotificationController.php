@@ -21,10 +21,54 @@ class NotificationController extends Controller
         $user = $request->user();
 
         // Get all "Assignment Successful" notifications for this owner
-        $successfulAssignments = Notification::where('user_id', $user->id)
+        $allNotifications = Notification::where('user_id', $user->id)
             ->where('title', 'Assignment Successful')
             ->orderBy('created_at', 'desc')
             ->get();
+
+        // Apply filters in PHP for JSON data
+        $successfulAssignments = $allNotifications->filter(function ($notification) use ($request) {
+            $data = json_decode($notification->data, true) ?? [];
+
+            // Filter by runner name
+            if ($request->runner_name) {
+                $runnerName = $data['runner_name'] ?? '';
+                if (stripos($runnerName, $request->runner_name) === false) {
+                    return false;
+                }
+            }
+
+            // Filter by teller name
+            if ($request->teller_name) {
+                $tellerName = $data['teller_name'] ?? '';
+                if (stripos($tellerName, $request->teller_name) === false) {
+                    return false;
+                }
+            }
+
+            // Filter by request type
+            if ($request->request_type) {
+                $requestType = $data['request_type'] ?? '';
+                if ($requestType !== $request->request_type) {
+                    return false;
+                }
+            }
+
+            // Filter by date range
+            if ($request->date_from) {
+                if ($notification->created_at->format('Y-m-d') < $request->date_from) {
+                    return false;
+                }
+            }
+
+            if ($request->date_to) {
+                if ($notification->created_at->format('Y-m-d') > $request->date_to) {
+                    return false;
+                }
+            }
+
+            return true;
+        })->values();
 
         // Get all tellers that have active assignments (currently have runners assigned)
         $allTellers = User::where('role', 'teller')->get();
@@ -85,6 +129,105 @@ class NotificationController extends Controller
         $notification->delete();
 
         return redirect()->route('owner.notifications.index')->with('success', 'Notification deleted.');
+    }
+
+    /**
+     * Export assignments to CSV
+     */
+    public function export(Request $request)
+    {
+        $user = $request->user();
+
+        // Get all "Assignment Successful" notifications for this owner
+        $allNotifications = Notification::where('user_id', $user->id)
+            ->where('title', 'Assignment Successful')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // Apply filters in PHP for JSON data (same logic as index)
+        $assignments = $allNotifications->filter(function ($notification) use ($request) {
+            $data = json_decode($notification->data, true) ?? [];
+
+            // Filter by runner name
+            if ($request->runner_name) {
+                $runnerName = $data['runner_name'] ?? '';
+                if (stripos($runnerName, $request->runner_name) === false) {
+                    return false;
+                }
+            }
+
+            // Filter by teller name
+            if ($request->teller_name) {
+                $tellerName = $data['teller_name'] ?? '';
+                if (stripos($tellerName, $request->teller_name) === false) {
+                    return false;
+                }
+            }
+
+            // Filter by request type
+            if ($request->request_type) {
+                $requestType = $data['request_type'] ?? '';
+                if ($requestType !== $request->request_type) {
+                    return false;
+                }
+            }
+
+            // Filter by date range
+            if ($request->date_from) {
+                if ($notification->created_at->format('Y-m-d') < $request->date_from) {
+                    return false;
+                }
+            }
+
+            if ($request->date_to) {
+                if ($notification->created_at->format('Y-m-d') > $request->date_to) {
+                    return false;
+                }
+            }
+
+            return true;
+        })->values();
+
+        $filename = 'assignments-' . now()->format('Y-m-d') . '.csv';
+
+        $headers = [
+            'Content-Type'        => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"$filename\"",
+            'Pragma'              => 'no-cache',
+            'Cache-Control'       => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires'             => '0',
+        ];
+
+        $callback = function () use ($assignments) {
+            $file = fopen('php://output', 'w');
+
+            // BOM for Excel UTF-8
+            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
+
+            // headers
+            fputcsv($file, [
+                'ID',
+                'Runner',
+                'Teller',
+                'Request Type',
+                'Date & Time',
+            ]);
+
+            foreach ($assignments as $assignment) {
+                $data = json_decode($assignment->data, true) ?? [];
+                fputcsv($file, [
+                    $assignment->id,
+                    $data['runner_name'] ?? '—',
+                    $data['teller_name'] ?? '—',
+                    ucfirst(str_replace('_', ' ', $data['request_type'] ?? '—')),
+                    $assignment->created_at->format('Y-m-d H:i:s'),
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 
     /**

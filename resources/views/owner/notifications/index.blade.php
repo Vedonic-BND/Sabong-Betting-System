@@ -45,6 +45,84 @@
     </div>
 @endif
 
+<!-- Filter Bar for Successful Assignments -->
+@if($successfulAssignments->count() > 0 || request()->anyFilled(['runner_name', 'teller_name', 'request_type', 'date_from', 'date_to']))
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-4 mb-6">
+        <form method="GET" action="{{ route('owner.notifications.index') }}" class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                <div>
+                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Runner Name</label>
+                    <input type="text" name="runner_name" value="{{ request('runner_name') }}"
+                        placeholder="Search runner..."
+                        class="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg px-3 py-2 text-sm
+                            focus:outline-none focus:ring-2 focus:ring-gray-800 dark:focus:ring-gray-600" />
+                </div>
+
+                <div>
+                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Teller Name</label>
+                    <input type="text" name="teller_name" value="{{ request('teller_name') }}"
+                        placeholder="Search teller..."
+                        class="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg px-3 py-2 text-sm
+                            focus:outline-none focus:ring-2 focus:ring-gray-800 dark:focus:ring-gray-600" />
+                </div>
+
+                <div>
+                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Request Type</label>
+                    <select name="request_type"
+                        class="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg px-3 py-2 text-sm
+                            focus:outline-none focus:ring-2 focus:ring-gray-800 dark:focus:ring-gray-600">
+                        <option value="">All Types</option>
+                        <option value="assistance" {{ request('request_type') === 'assistance' ? 'selected' : '' }}>Assistance</option>
+                        <option value="need_cash" {{ request('request_type') === 'need_cash' ? 'selected' : '' }}>Need Cash</option>
+                        <option value="collect_cash" {{ request('request_type') === 'collect_cash' ? 'selected' : '' }}>Collect Cash</option>
+                        <option value="other" {{ request('request_type') === 'other' ? 'selected' : '' }}>Other</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">From Date</label>
+                    <input type="date" name="date_from" value="{{ request('date_from') }}"
+                        class="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg px-3 py-2 text-sm
+                            focus:outline-none focus:ring-2 focus:ring-gray-800 dark:focus:ring-gray-600" />
+                </div>
+
+                <div>
+                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">To Date</label>
+                    <input type="date" name="date_to" value="{{ request('date_to') }}"
+                        class="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg px-3 py-2 text-sm
+                            focus:outline-none focus:ring-2 focus:ring-gray-800 dark:focus:ring-gray-600" />
+                </div>
+            </div>
+
+            <div class="flex flex-wrap gap-2 justify-start items-center">
+                <button type="submit"
+                    class="bg-gray-900 dark:bg-gray-700 hover:bg-gray-700 dark:hover:bg-gray-600 text-white text-sm px-4 py-2 rounded-lg transition">
+                    Filter
+                </button>
+
+                @if (request()->anyFilled(['runner_name', 'teller_name', 'request_type', 'date_from', 'date_to']))
+                    <a href="{{ route('owner.notifications.index') }}"
+                        class="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white px-3 py-2 transition">
+                        ✕ Clear Filters
+                    </a>
+                @endif
+
+                {{-- export button --}}
+                <a href="{{ route('owner.notifications.export', request()->query()) }}"
+                    class="flex items-center gap-2 bg-green-600 hover:bg-green-700
+                           text-white text-sm font-medium px-4 py-2 rounded-lg transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    Export CSV
+                </a>
+            </div>
+        </form>
+    </div>
+@endif
+
 <!-- Successful Assignments Section -->
 @if($successfulAssignments->count() > 0)
     <div class="mb-8">
@@ -56,6 +134,7 @@
                         <tr class="bg-green-50 dark:bg-green-900/20 border-b-2 border-green-300 dark:border-green-700">
                             <th class="px-4 py-3 text-left text-sm font-semibold text-green-700 dark:text-green-400">Runner</th>
                             <th class="px-4 py-3 text-left text-sm font-semibold text-green-700 dark:text-green-400">Assigned to Teller</th>
+                            <th class="px-4 py-3 text-left text-sm font-semibold text-green-700 dark:text-green-400">Request Type</th>
                             <th class="px-4 py-3 text-left text-sm font-semibold text-green-700 dark:text-green-400">Time Assigned</th>
                         </tr>
                     </thead>
@@ -67,6 +146,20 @@
                                 </td>
                                 <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
                                     {{ json_decode($assignment->data, true)['teller_name'] ?? 'Unknown Teller' }}
+                                </td>
+                                <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+                                    <span class="inline-block px-2 py-1 rounded-full text-xs font-semibold
+                                        {{
+                                            match(json_decode($assignment->data, true)['request_type'] ?? '') {
+                                                'assistance' => 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400',
+                                                'need_cash' => 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400',
+                                                'collect_cash' => 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400',
+                                                'other' => 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300',
+                                                default => 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
+                                            }
+                                        }}">
+                                        {{ ucfirst(str_replace('_', ' ', json_decode($assignment->data, true)['request_type'] ?? 'N/A')) }}
+                                    </span>
                                 </td>
                                 <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
                                     {{ $assignment->created_at->format('M d, Y H:i') }}
