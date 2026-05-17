@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PayoutController;
 use App\Http\Controllers\Api\RunnerController;
 use App\Http\Controllers\Api\RunnerAssistanceController;
+use App\Http\Controllers\Api\TestBroadcastController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -132,3 +133,17 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 
 });
+
+/*
+|--------------------------------------------------------------------------
+| PUBLIC endpoints (accessible by all)
+|--------------------------------------------------------------------------
+*/
+Route::get('/runners/available', [\App\Http\Controllers\Owner\NotificationController::class, 'getAvailableRunners']);
+
+/*
+|--------------------------------------------------------------------------
+| TEST endpoints (for debugging)
+|--------------------------------------------------------------------------
+*/
+Route::post('/test/broadcast-notification', [TestBroadcastController::class, 'testNotification']);

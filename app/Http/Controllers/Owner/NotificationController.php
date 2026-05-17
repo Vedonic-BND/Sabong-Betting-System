@@ -3,8 +3,11 @@
 namespace App\Http\Controllers\Owner;
 
 use App\Http\Controllers\Controller;
+use App\Models\CashRequest;
 use App\Models\Notification;
 use App\Models\User;
+use App\Events\RunnerAccepted;
+use App\Events\RunnerAssignedByOwner;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
@@ -23,33 +26,27 @@ class NotificationController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // Get all "Assistance Needed" notifications from tellers to runners (for monitoring active requests)
-        $assistanceNotifications = Notification::where('title', 'Assistance Needed')
-            ->orderBy('created_at', 'desc')
-            ->get()
-            ->map(function ($notification) {
-                // Extract teller info from notification data
-                $data = $notification->data ?? [];
-                $tellerId = $data['teller_id'] ?? null;
+        // Get all tellers that have active assignments (currently have runners assigned)
+        $allTellers = User::where('role', 'teller')->get();
+        $tellersWithAssignments = [];
 
-                // Check if a runner is currently assigned to this teller
-                $assignmentKey = "teller_assigned_{$tellerId}";
-                $assignedRunner = Cache::get($assignmentKey);
+        foreach ($allTellers as $teller) {
+            $assignmentKey = "teller_assigned_{$teller->id}";
+            $assignedRunner = Cache::get($assignmentKey);
 
-                // Get teller user details
-                $teller = User::find($tellerId);
+            $tellersWithAssignments[] = (object)[
+                'teller' => $teller,
+                'teller_id' => $teller->id,
+                'assigned_runner' => $assignedRunner,
+                'is_active' => $assignedRunner !== null,
+                'created_at' => now(),
+            ];
+        }
 
-                return (object)[
-                    'notification' => $notification,
-                    'teller' => $teller,
-                    'teller_id' => $tellerId,
-                    'request_type' => $data['request_type'] ?? 'assistance',
-                    'custom_message' => $data['custom_message'] ?? null,
-                    'assigned_runner' => $assignedRunner,
-                    'is_active' => $assignedRunner !== null,
-                    'created_at' => $notification->created_at,
-                ];
-            });
+        // Filter to show only tellers WITHOUT active assignments (pending assignment)
+        $availableTellers = collect($tellersWithAssignments)->filter(function ($item) {
+            return !$item->is_active;
+        })->values();
 
         // Count unread notifications
         $unreadCount = Notification::where('user_id', $user->id)
@@ -57,7 +54,7 @@ class NotificationController extends Controller
             ->whereIn('title', ['Assignment Successful', 'Assistance Needed'])
             ->count();
 
-        return view('owner.notifications.index', compact('assistanceNotifications', 'successfulAssignments', 'unreadCount'));
+        return view('owner.notifications.index', compact('availableTellers', 'successfulAssignments', 'unreadCount'));
     }
 
     /**
@@ -98,5 +95,130 @@ class NotificationController extends Controller
         Notification::where('user_id', $request->user()->id)->delete();
 
         return redirect()->route('owner.notifications.index')->with('success', 'All notifications cleared.');
+    }
+
+    /**
+     * Get all available runners for assignment
+     */
+    public function getAvailableRunners(Request $request)
+    {
+        $runners = User::where('role', 'runner')
+            ->select('id', 'name')
+            ->get();
+
+        return response()->json($runners);
+    }
+
+    /**
+     * Get message based on request type
+     */
+    private function getRequestMessage(string $requestType, ?string $customMessage = null): string
+    {
+        return match ($requestType) {
+            'assistance' => 'Assistance needed',
+            'need_cash' => 'Runner needed for cash',
+            'collect_cash' => 'Runner needed to collect cash',
+            'other' => "Custom request: {$customMessage}",
+            default => 'Assistance needed',
+        };
+    }
+
+    /**
+     * Manually assign a runner to a teller
+     */
+    public function assignRunner(Request $request, $tellerId)
+    {
+        $request->validate([
+            'runner_id' => ['required', 'integer', 'exists:users,id'],
+            'request_type' => ['required', 'in:assistance,need_cash,collect_cash,other'],
+        ]);
+
+        $teller = User::find($tellerId);
+        $runner = User::find($request->runner_id);
+
+        if (!$teller || $teller->role !== 'teller') {
+            return response()->json(['message' => 'Invalid teller'], 404);
+        }
+
+        if (!$runner || $runner->role !== 'runner') {
+            return response()->json(['message' => 'Invalid runner'], 404);
+        }
+
+        // Set the assignment in cache (auto-expires)
+        $assignmentKey = "teller_assigned_{$tellerId}";
+        Cache::put($assignmentKey, [
+            'id' => $runner->id,
+            'name' => $runner->name,
+        ], now()->addSeconds(30));
+
+        // Get the message based on request type
+        $message = $this->getRequestMessage($request->request_type);
+
+        // Create a CashRequest record to simulate the acceptance
+        $cashRequest = CashRequest::create([
+            'teller_id' => $tellerId,
+            'runner_id' => $runner->id,
+            'request_type' => $request->request_type,
+            'type' => 'cash_in',
+            'amount' => 0,
+            'status' => 'approved',
+            'approved_at' => now(),
+        ]);
+
+        // Broadcast the RunnerAccepted event on cash-requests channel
+        // This will trigger the same notification popup as when a runner accepts a request
+        event(new RunnerAccepted($cashRequest));
+
+        // Broadcast to runner that they have been assigned by owner
+        event(new RunnerAssignedByOwner($cashRequest));
+
+        // Save notification for teller that runner is on the way
+        Notification::create([
+            'user_id' => $tellerId,
+            'title' => 'Runner Assigned',
+            'message' => "{$runner->name} is on the way. {$message}.",
+            'data' => json_encode([
+                'runner_id' => $runner->id,
+                'runner_name' => $runner->name,
+                'request_type' => $request->request_type,
+            ]),
+            'is_read' => false,
+        ]);
+
+        // Save notification for runner about the assignment
+        Notification::create([
+            'user_id' => $runner->id,
+            'title' => 'New Assignment',
+            'message' => "You have been assigned to assist {$teller->name} - {$message}",
+            'data' => json_encode([
+                'teller_id' => $tellerId,
+                'teller_name' => $teller->name,
+                'request_type' => $request->request_type,
+            ]),
+            'is_read' => false,
+        ]);
+
+        // Save notification for owner about the successful assignment
+        $owner = User::where('role', 'owner')->first();
+        if ($owner) {
+            Notification::create([
+                'user_id' => $owner->id,
+                'title' => 'Assignment Successful',
+                'message' => "{$runner->name} has been assigned to assist {$teller->name} - {$message}",
+                'data' => json_encode([
+                    'runner_id' => $runner->id,
+                    'runner_name' => $runner->name,
+                    'teller_id' => $tellerId,
+                    'teller_name' => $teller->name,
+                    'request_type' => $request->request_type,
+                ]),
+                'is_read' => false,
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'Runner assigned successfully',
+            'runner' => ['id' => $runner->id, 'name' => $runner->name],
+        ]);
     }
 }

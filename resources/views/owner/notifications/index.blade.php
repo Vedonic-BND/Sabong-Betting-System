@@ -13,6 +13,38 @@
     </div>
 </div>
 
+<!-- Active Tellers Requesting Assistance (Grid View) -->
+@if($availableTellers->count() > 0)
+    <div class="mb-8">
+        <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-4">🤵‍♀️ Available Tellers</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            @foreach($availableTellers as $item)
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition cursor-pointer p-4 border-2 border-transparent hover:border-blue-400 dark:hover:border-blue-600"
+                    onclick="loadAvailableRunners(); openAssignRunnerModal({{ $item->teller_id }}, '{{ $item->teller->name }}')">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex-1">
+                            <h4 class="text-lg font-semibold text-gray-800 dark:text-white">{{ $item->teller->name }}</h4>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                Teller
+                            </p>
+                        </div>
+                        <div class="text-2xl">👤</div>
+                    </div>
+
+                    <div class="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
+                        <span class="text-xs text-gray-500 dark:text-gray-400">
+                            Click to assign runner
+                        </span>
+                        <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400">
+                            + Assign
+                        </span>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    </div>
+@endif
+
 <!-- Successful Assignments Section -->
 @if($successfulAssignments->count() > 0)
     <div class="mb-8">
@@ -46,84 +78,204 @@
             </div>
         </div>
     </div>
+@else
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-12 text-center">
+        <div class="text-5xl mb-4">✅</div>
+        <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">No Assignments</h3>
+        <p class="text-gray-500 dark:text-gray-400">
+            No completed assignments yet. Assignments will appear here when runners accept requests.
+        </p>
+    </div>
 @endif
 
-<!-- Active Assistance Requests Section -->
-@if($assistanceNotifications->count() > 0)
-    <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-4">🔔 Active Assistance Requests</h3>
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden mb-8">
-        <div class="overflow-x-auto">
-            <table class="min-w-full">
-                <thead>
-                    <tr class="bg-gray-100 dark:bg-gray-700 border-b-2 border-gray-300 dark:border-gray-600">
-                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Teller</th>
-                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Request Type</th>
-                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Message</th>
-                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Runner Assigned</th>
-                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Status</th>
-                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Time</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($assistanceNotifications as $item)
-                        <tr class="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
-                            <td class="px-4 py-3 text-sm text-gray-900 dark:text-white font-medium">
-                                {{ $item->teller?->name ?? 'Unknown Teller' }}
-                            </td>
-                            <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                                {{ ucfirst(str_replace('_', ' ', $item->request_type)) }}
-                            </td>
-                            <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 max-w-xs truncate">
-                                @if($item->custom_message)
-                                    <span class="italic">{{ $item->custom_message }}</span>
-                                @else
-                                    <span class="text-gray-400">—</span>
-                                @endif
-                            </td>
-                            <td class="px-4 py-3 text-sm font-semibold">
-                                @if($item->assigned_runner)
-                                    <span class="text-green-600 dark:text-green-400">{{ $item->assigned_runner['name'] ?? 'Unknown Runner' }}</span>
-                                @else
-                                    <span class="text-gray-400">—</span>
-                                @endif
-                            </td>
-                            <td class="px-4 py-3 text-sm">
-                                @if($item->is_active)
-                                    <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400">
-                                        Assigned
-                                    </span>
-                                @else
-                                    <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400">
-                                        Pending
-                                    </span>
-                                @endif
-                            </td>
-                            <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                                {{ $item->created_at->format('M d, Y H:i') }}
-                            </td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
+<!-- Assign Runner Modal -->
+<div id="assignRunnerModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50" style="display: none;">
+    <div class="fixed inset-0 flex items-center justify-center">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md">
+        <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-4">Assign Runner to Teller</h3>
+
+        <div class="mb-4">
+            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Teller</label>
+            <input type="text" id="tellerNameDisplay" disabled class="w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white rounded border border-gray-300 dark:border-gray-600">
+            <input type="hidden" id="selectedTellerId">
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Request Type</label>
+            <select id="requestTypeSelect" class="w-full px-3 py-2 bg-white dark:bg-gray-700 text-gray-800 dark:text-white rounded border border-gray-300 dark:border-gray-600">
+                <option value="assistance">Assistance</option>
+                <option value="need_cash">Need Cash</option>
+                <option value="collect_cash">Collect Cash</option>
+                <option value="other">Other</option>
+            </select>
+        </div>
+
+        <div class="mb-6">
+            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Select Runner</label>
+            <select id="runnerSelect" class="w-full px-3 py-2 bg-white dark:bg-gray-700 text-gray-800 dark:text-white rounded border border-gray-300 dark:border-gray-600">
+                <option value="">-- Choose a runner --</option>
+            </select>
+        </div>
+
+        <div class="flex gap-3">
+            <button onclick="closeAssignRunnerModal()"
+                class="flex-1 px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold rounded transition">
+                Cancel
+            </button>
+            <button onclick="assignRunner()"
+                class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded transition">
+                Assign
+            </button>
         </div>
     </div>
+    </div>
+</div>
 
-    <script>
-        // Auto-refresh every 3 seconds
-        setInterval(function() {
-            location.reload();
-        }, 3000);
-    </script>
-@else
-    @if($successfulAssignments->count() == 0)
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-12 text-center">
-            <div class="text-5xl mb-4">🔔</div>
-            <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">No Activity</h3>
-            <p class="text-gray-500 dark:text-gray-400">
-                No assistance requests or assignments at this time. The system is running smoothly!
-            </p>
-        </div>
-    @endif
-@endif
+<script>
+    let availableRunners = [];
+    let isModalOpen = false; // Track modal state
+
+    // Fetch available runners when page loads
+    async function loadAvailableRunners() {
+        try {
+            const response = await fetch('/api/runners/available', {
+                headers: {
+                    'Authorization': 'Bearer ' + document.querySelector('meta[name="csrf-token"]')?.content,
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            if (response.ok) {
+                availableRunners = await response.json();
+                populateRunnerSelect();
+            }
+        } catch (error) {
+            console.error('Error loading runners:', error);
+        }
+    }
+
+    function populateRunnerSelect() {
+        const select = document.getElementById('runnerSelect');
+        // Clear existing options except the default one
+        while (select.children.length > 1) {
+            select.removeChild(select.lastChild);
+        }
+        availableRunners.forEach(runner => {
+            const option = document.createElement('option');
+            option.value = runner.id;
+            option.textContent = runner.name;
+            select.appendChild(option);
+        });
+    }
+
+    function openAssignRunnerModal(tellerId, tellerName) {
+        isModalOpen = true; // Set flag to true
+        document.getElementById('selectedTellerId').value = tellerId;
+        document.getElementById('tellerNameDisplay').value = tellerName;
+        document.getElementById('runnerSelect').value = '';
+        document.getElementById('assignRunnerModal').style.display = 'block';
+    }
+
+    function closeAssignRunnerModal() {
+        isModalOpen = false; // Set flag to false
+        document.getElementById('assignRunnerModal').style.display = 'none';
+    }
+
+    async function assignRunner() {
+        const tellerId = document.getElementById('selectedTellerId').value;
+        const runnerId = document.getElementById('runnerSelect').value;
+        const requestType = document.getElementById('requestTypeSelect').value;
+
+        if (!runnerId) {
+            alert('Please select a runner');
+            return;
+        }
+
+        try {
+            // Get CSRF token from meta tag
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+            const response = await fetch(`/owner/assign-runner/${tellerId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: JSON.stringify({
+                    runner_id: runnerId,
+                    request_type: requestType
+                })
+            });
+
+            if (response.ok) {
+                alert('Runner assigned successfully!');
+                closeAssignRunnerModal();
+                // Refresh the page to see updates
+                location.reload();
+            } else {
+                const error = await response.json();
+                alert('Error: ' + (error.message || 'Failed to assign runner'));
+            }
+        } catch (error) {
+            console.error('Error assigning runner:', error);
+            alert('Error assigning runner');
+        }
+    }
+
+    // Load runners on page load
+    document.addEventListener('DOMContentLoaded', loadAvailableRunners);
+</script>
+
+<script>
+    // Real-time updates using fetch API with smooth refresh
+    let lastUpdateTime = new Date();
+
+    async function refreshRequests() {
+        // Don't refresh if modal is open
+        if (isModalOpen) {
+            return;
+        }
+
+        try {
+            const response = await fetch(window.location.href, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            if (response.ok) {
+                const html = await response.text();
+                const parser = new DOMParser();
+                const newDoc = parser.parseFromString(html, 'text/html');
+
+                // Replace the main content section
+                const currentContent = document.querySelector('[data-page-content]') || document.querySelector('main') || document.body;
+                const newContent = newDoc.querySelector('[data-page-content]') || newDoc.querySelector('main') || newDoc.body;
+
+                if (newContent && currentContent && newContent.innerHTML !== currentContent.innerHTML) {
+                    currentContent.innerHTML = newContent.innerHTML;
+                    lastUpdateTime = new Date();
+                    console.log('Requests updated:', lastUpdateTime.toLocaleTimeString());
+                }
+            }
+        } catch (error) {
+            console.error('Error refreshing requests:', error);
+        }
+    }
+
+    // Use WebSocket for real-time updates instead of polling every 2 seconds
+    // The 2-second interval was causing excessive server load (30 requests/min per user)
+    // WebSocket via Reverb provides real-time updates without polling
+    // Uncomment below to enable polling as fallback if WebSocket is unavailable
+    // setInterval(refreshRequests, 2000);
+
+    // Also refresh on page visibility change
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) {
+            refreshRequests();  // Single refresh when tab becomes visible
+        }
+    });
+</script>
 
 @endsection

@@ -56,6 +56,23 @@ class RunnerAssistanceController extends Controller
         // Broadcast the event to all runners via WebSocket (no database save until acceptance)
         event(new CashRequestCreated($cashRequest));
 
+        // Save "Assistance Needed" notification for owner to see
+        $owner = User::where('role', 'owner')->first();
+        if ($owner) {
+            Notification::create([
+                'user_id' => $owner->id,
+                'title' => 'Assistance Needed',
+                'message' => "{$user->name} is requesting assistance",
+                'data' => json_encode([
+                    'teller_id' => $user->id,
+                    'teller_name' => $user->name,
+                    'request_type' => $request->request_type,
+                    'custom_message' => $request->custom_message,
+                ]),
+                'is_read' => false,
+            ]);
+        }
+
         return response()->json([
             'message' => 'Assistance request sent to all runners.',
         ], 201);

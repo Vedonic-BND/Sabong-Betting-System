@@ -107,6 +107,8 @@ Route::middleware(['auth', 'role:owner'])
             ->name('notifications.delete');
         Route::delete('/notifications', [\App\Http\Controllers\Owner\NotificationController::class, 'clear'])
             ->name('notifications.clear');
+        Route::post('/assign-runner/{tellerId}', [\App\Http\Controllers\Owner\NotificationController::class, 'assignRunner'])
+            ->name('assign-runner');
 
         // live stats endpoint
         Route::get('/stats', function () {
