@@ -20,6 +20,7 @@ class FightController extends Controller
     public function current()
     {
         $fight = Fight::whereIn('status', ['open', 'closed', 'pending'])
+            ->whereNull('session_date') // only current session fights
             ->orderByRaw("FIELD(status, 'open', 'closed', 'pending')")
             ->latest()
             ->first();
@@ -49,8 +50,10 @@ class FightController extends Controller
             'commission_rate' => ['sometimes', 'numeric', 'min:0', 'max:100'],
         ]);
 
-        // check if there's already an active fight
-        $activeFight = Fight::whereIn('status', ['pending', 'open', 'closed'])->first();
+        // check if there's already an active fight (only in current session)
+        $activeFight = Fight::whereIn('status', ['pending', 'open', 'closed'])
+            ->whereNull('session_date')
+            ->first();
 
         if ($activeFight) {
             return response()->json([
@@ -70,6 +73,7 @@ class FightController extends Controller
             'meron_status'    => 'open',
             'wala_status'     => 'open',
             'commission_rate' => $request->commission_rate ?? 5.00,
+            'session_date'    => null, // null means it's in the current active session
         ]);
 
         AuditLogger::log('created_fight', 'fight', $fight->id, [
@@ -219,32 +223,26 @@ class FightController extends Controller
     public function reset()
     {
         try {
-            // Log all fights before reset
-            $fights = Fight::all();
-            foreach ($fights as $fight) {
-                AuditLogger::log('archived_fight_on_reset', 'fight', $fight->id, [
-                    'fight_number' => $fight->fight_number,
-                    'status' => $fight->status,
-                ]);
-            }
+            // Mark all existing fights with today's session date
+            // This preserves ALL fights (including active ones) but isolates them from new session
+            $today = now()->toDateString();
+            $fightsUpdated = Fight::whereNull('session_date')->update(['session_date' => $today]);
 
-            // Disable foreign key checks temporarily
-            \DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-
-            // Delete all fights (this will cascade and delete related bets if needed)
-            Fight::query()->delete();
-
-            // Re-enable foreign key checks
-            \DB::statement('SET FOREIGN_KEY_CHECKS=1;');
-
+            // Log the reset action
+            $totalFights = Fight::count();
             AuditLogger::log('reset_fight_counter', 'system', null, [
-                'message' => 'Fight counter reset. All fights and bets archived. Next fight will be 1.',
+                'message' => 'Fight counter reset to 1. New session started.',
+                'session_date' => $today,
+                'fights_in_previous_session' => $fightsUpdated,
+                'total_fights_preserved' => $totalFights,
             ]);
 
             broadcast(new FightUpdated(new Fight()));
 
             return response()->json([
-                'message' => 'Fight counter reset successfully. All fights cleared. Next fight will start from 1.',
+                'message' => 'Fight counter reset successfully to 1. New session started.',
+                'session_date' => $today,
+                'fights_moved_to_session' => $fightsUpdated,
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -307,7 +305,8 @@ class FightController extends Controller
     // GET /api/fight/history
     public function history(Request $request)
     {
-        $fights = Fight::orderBy('created_at', 'desc')
+        $fights = Fight::whereNull('session_date') // only current session fights
+            ->orderBy('created_at', 'desc')
             ->get()
             ->map(fn($f) => [
                 'id'              => $f->id,

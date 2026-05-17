@@ -19,6 +19,7 @@ class Fight extends Model
         'wala_status',
         'winner',
         'commission_rate',
+        'session_date',
     ];
 
     protected function casts(): array

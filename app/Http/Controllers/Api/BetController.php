@@ -32,15 +32,15 @@ class BetController extends Controller
                 'qr'           => null,
                 'barcode'      => null,
                 'receipt' => [
-                    'fight_number' => $bet->fight->fight_number ?? null,
+                    'fight_number' => $bet->fight?->fight_number ?? null,
                     'side'         => strtoupper($bet->side),
                     'amount'       => number_format($bet->amount, 2),
                     'reference'    => $bet->reference,
                     'date'         => $bet->created_at->format('M d, Y'),
                     'time'         => $bet->created_at->format('h:i A'),
                 ],
-                'winner'       => $bet->fight->winner,
-                'won'          => $bet->side === $bet->fight->winner,
+                'winner'       => $bet->fight?->winner,
+                'won'          => $bet->fight ? $bet->side === $bet->fight->winner : null,
                 'status'       => $bet->payout?->status ?? 'pending',
                 'gross_payout' => $bet->payout?->gross_payout ? number_format($bet->payout->gross_payout, 2) : null,
                 'net_payout'   => $bet->payout?->net_payout ? number_format($bet->payout->net_payout, 2) : null,
@@ -49,7 +49,7 @@ class BetController extends Controller
                 'bet' => [
                     'id'           => $bet->id,
                     'reference'    => $bet->reference,
-                    'fight_number' => $bet->fight->fight_number ?? null,
+                    'fight_number' => $bet->fight?->fight_number ?? null,
                     'side'         => $bet->side,
                     'amount'       => $bet->amount,
                     'created_at'   => $bet->created_at,
@@ -110,7 +110,11 @@ class BetController extends Controller
             'amount' => ['required', 'numeric', 'min:1'],
         ]);
 
-        $fight = Fight::where('status', 'open')->latest()->first();
+        // Get open fight only from current session (session_date = null)
+        $fight = Fight::where('status', 'open')
+            ->whereNull('session_date')
+            ->latest()
+            ->first();
 
         if (!$fight) {
             return response()->json([

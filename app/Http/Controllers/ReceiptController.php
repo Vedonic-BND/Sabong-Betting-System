@@ -34,6 +34,11 @@ class ReceiptController extends Controller
             abort(404, 'Payout not yet calculated.');
         }
 
+        // Ensure fight exists before accessing it
+        if (!$bet->fight) {
+            abort(404, 'Associated fight not found.');
+        }
+
         // Only winners can view payout receipt
         if ($bet->side !== $bet->fight->winner) {
             abort(404, 'No payout available for this bet.');

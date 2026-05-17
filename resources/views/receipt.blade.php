@@ -65,7 +65,7 @@
     {{-- FIGHT INFO --}}
     <div class="row">
         <span class="label">Fight #</span>
-        <span class="value">{{ $bet->fight->fight_number }}</span>
+        <span class="value">{{ $bet->fight?->fight_number ?? '—' }}</span>
     </div>
 
     <div class="row">

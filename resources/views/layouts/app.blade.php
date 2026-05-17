@@ -154,6 +154,14 @@
                 <span :class="sidebarOpen ? 'opacity-100' : 'opacity-0 hidden'" class="transition-opacity duration-300">Audit Logs</span>
             </a>
 
+            <a href="{{ route('owner.transactions.index') }}"
+                :title="!sidebarOpen ? 'Transactions' : ''"
+                class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-700 dark:hover:bg-gray-800 text-sm whitespace-nowrap transition
+                {{ request()->routeIs('owner.transactions.*') ? 'bg-gray-700 dark:bg-gray-800 text-white' : 'text-gray-300 dark:text-gray-400' }}">
+                <span class="flex-shrink-0">💱</span>
+                <span :class="sidebarOpen ? 'opacity-100' : 'opacity-0 hidden'" class="transition-opacity duration-300">Transactions</span>
+            </a>
+
             <hr class="my-2 border-gray-700 dark:border-gray-800">
 
             <a href="{{ route('owner.profile.show') }}"

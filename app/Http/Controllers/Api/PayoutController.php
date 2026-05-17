@@ -29,6 +29,10 @@ class PayoutController extends Controller
             return response()->json(['message' => 'Payout not yet calculated.'], 422);
         }
 
+        if (!$bet->fight) {
+            return response()->json(['message' => 'Associated fight not found.'], 404);
+        }
+
         return response()->json([
             'reference'    => $bet->reference,
             'fight'        => $bet->fight->fight_number,

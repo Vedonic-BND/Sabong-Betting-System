@@ -103,6 +103,12 @@ Route::middleware(['auth', 'role:owner'])
             ->name('notifications.export');
         Route::get('/notifications', [\App\Http\Controllers\Owner\NotificationController::class, 'index'])
             ->name('notifications.index');
+
+        // transactions (collect/provide by runners)
+        Route::get('/transactions/export', [\App\Http\Controllers\Owner\TransactionController::class, 'export'])
+            ->name('transactions.export');
+        Route::get('/transactions', [\App\Http\Controllers\Owner\TransactionController::class, 'index'])
+            ->name('transactions.index');
         Route::patch('/notifications/{notification}/read', [\App\Http\Controllers\Owner\NotificationController::class, 'markAsRead'])
             ->name('notifications.mark-read');
         Route::delete('/notifications/{notification}', [\App\Http\Controllers\Owner\NotificationController::class, 'delete'])

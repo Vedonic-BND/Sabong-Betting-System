@@ -58,7 +58,7 @@
     {{-- FIGHT INFO --}}
     <div class="row">
         <span class="label">Fight #</span>
-        <span class="value">{{ $bet->fight->fight_number }}</span>
+        <span class="value">{{ $bet->fight?->fight_number ?? '—' }}</span>
     </div>
 
     <div class="row">
@@ -70,7 +70,7 @@
 
     <div class="row">
         <span class="label">Winner</span>
-        <span class="value">{{ strtoupper($bet->fight->winner) }}</span>
+        <span class="value">{{ strtoupper($bet->fight?->winner ?? '—') }}</span>
     </div>
 
     <div class="divider"></div>
@@ -96,7 +96,7 @@
         <span class="value">
             @php
                 $multiplier = $bet->payout->winning_side_multiplier;
-                if (!$multiplier) {
+                if (!$multiplier && $bet->fight) {
                     // Fallback: calculate multiplier if not stored
                     $meronTotal = $bet->fight->meronTotal();
                     $walaTotal = $bet->fight->walaTotal();
@@ -106,7 +106,7 @@
                     $multiplier = $winningSideTotal > 0 ? ($netPool / $winningSideTotal) * 100 : 0;
                 }
             @endphp
-            {{ number_format($multiplier, 2) }}x
+            {{ number_format($multiplier ?? 0, 2) }}x
         </span>
     </div>
 

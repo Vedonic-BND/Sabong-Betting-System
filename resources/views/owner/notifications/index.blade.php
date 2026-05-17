@@ -129,13 +129,13 @@
         <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-4">✅ Successful Assignments</h3>
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
             <div class="overflow-x-auto">
-                <table class="min-w-full">
+                <table class="min-w-full text-sm">
                     <thead>
-                        <tr class="bg-green-50 dark:bg-green-900/20 border-b-2 border-green-300 dark:border-green-700">
-                            <th class="px-4 py-3 text-left text-sm font-semibold text-green-700 dark:text-green-400">Runner</th>
-                            <th class="px-4 py-3 text-left text-sm font-semibold text-green-700 dark:text-green-400">Assigned to Teller</th>
-                            <th class="px-4 py-3 text-left text-sm font-semibold text-green-700 dark:text-green-400">Request Type</th>
-                            <th class="px-4 py-3 text-left text-sm font-semibold text-green-700 dark:text-green-400">Time Assigned</th>
+                        <tr class="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+                            <th class="text-left px-6 py-3 text-gray-500 dark:text-gray-400 font-medium">Runner</th>
+                            <th class="text-left px-6 py-3 text-gray-500 dark:text-gray-400 font-medium">Assigned to Teller</th>
+                            <th class="text-left px-6 py-3 text-gray-500 dark:text-gray-400 font-medium">Request Type</th>
+                            <th class="text-left px-6 py-3 text-gray-500 dark:text-gray-400 font-medium">Time Assigned</th>
                         </tr>
                     </thead>
                     <tbody>
