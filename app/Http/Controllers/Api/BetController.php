@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Events\BetPlaced;
+use App\Events\BetDeleted;
 use App\Events\TellerCashStatusUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\Bet;
@@ -181,5 +182,83 @@ class BetController extends Controller
                 'created_at'   => $bet->created_at,
             ],
         ], 201);
+    }
+
+    // GET /api/admin/bet/history — Get all bets placed by authenticated admin
+    public function adminHistory(Request $request)
+    {
+        $user = $request->user();
+
+        // Get bets for authenticated admin only with payout relationship
+        $bets = Bet::where('teller_id', $user->id)
+            ->with(['fight', 'payout'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $formattedBets = $bets->map(function ($bet) {
+            return [
+                'reference'    => $bet->reference,
+                'message'      => 'Bet retrieved successfully.',
+                'qr'           => null,
+                'barcode'      => null,
+                'receipt' => [
+                    'fight_number' => $bet->fight?->fight_number ?? null,
+                    'side'         => strtoupper($bet->side),
+                    'amount'       => number_format($bet->amount, 2),
+                    'reference'    => $bet->reference,
+                    'date'         => $bet->created_at->format('M d, Y'),
+                    'time'         => $bet->created_at->format('h:i A'),
+                ],
+                'bet' => [
+                    'id'           => $bet->id,
+                    'reference'    => $bet->reference,
+                    'fight_number' => $bet->fight?->fight_number ?? null,
+                    'side'         => $bet->side,
+                    'amount'       => (string)$bet->amount,
+                    'created_at'   => $bet->created_at,
+                ],
+                'winner'       => $bet->fight?->winner,
+                'won'          => $bet->fight ? $bet->side === $bet->fight->winner : null,
+                'status'       => $bet->payout?->status ?? 'pending',
+                'net_payout'   => $bet->payout?->net_payout ? number_format($bet->payout->net_payout, 2) : null,
+            ];
+        });
+
+        return response()->json([
+            'data' => $formattedBets,
+        ], 200);
+    }
+
+    // DELETE /api/admin/bet/{id} — Delete a bet placed by admin
+    public function adminDestroyBet(Request $request, $betId)
+    {
+        $user = $request->user();
+
+        $bet = Bet::where('id', $betId)
+            ->where('teller_id', $user->id)
+            ->first();
+
+        if (!$bet) {
+            return response()->json([
+                'message' => 'Bet not found or unauthorized.',
+            ], 404);
+        }
+
+        // Log the deletion
+        AuditLogger::log('deleted_bet', 'bet', $bet->id, [
+            'reference' => $bet->reference,
+            'side'      => $bet->side,
+            'amount'    => $bet->amount,
+        ]);
+
+        // Broadcast bet deletion event synchronously before deleting
+        \Log::info('🎯 Broadcasting bet deletion for bet ID ' . $bet->id);
+        broadcast(new BetDeleted($bet))->toOthers();
+
+        $bet->delete();
+
+        return response()->json([
+            'message' => 'Bet deleted successfully.',
+        ], 200);
     }
 }

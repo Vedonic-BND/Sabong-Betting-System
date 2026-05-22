@@ -59,6 +59,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::put('/fight/{fight}/all-side-status', [FightController::class, 'allSideStatus']);
         Route::post('/fight/{fight}/finalize', [FightController::class, 'finalizeBet']);
         Route::get('/fight/history', [FightController::class, 'history']);
+
+        // Admin bet history management
+        Route::get('/admin/bet/history', [BetController::class, 'adminHistory']);
+        Route::delete('/admin/bet/{id}', [BetController::class, 'adminDestroyBet']);
     });
 
     /*
