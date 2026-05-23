@@ -73,6 +73,48 @@ class FightController extends Controller
         }
     }
 
+    // GET /api/fight/{id}
+    public function show(Fight $fight)
+    {
+        \Log::info("📡 [API] /api/fight/{$fight->id} endpoint called");
+
+        try {
+            $meronTotal = 0;
+            $walaTotal = 0;
+
+            try {
+                $meronTotal = $fight->meronTotal();
+            } catch (\Exception $e) {
+                \Log::error("📡 [API] Error calculating meronTotal: " . $e->getMessage());
+            }
+
+            try {
+                $walaTotal = $fight->walaTotal();
+            } catch (\Exception $e) {
+                \Log::error("📡 [API] Error calculating walaTotal: " . $e->getMessage());
+            }
+
+            \Log::info("📡 [API] /api/fight/{$fight->id} returning Fight #{$fight->fight_number}");
+
+            return response()->json([
+                'id'              => $fight->id,
+                'fight_number'    => $fight->fight_number,
+                'status'          => $fight->status,
+                'meron_status'    => $fight->meron_status,
+                'wala_status'     => $fight->wala_status,
+                'winner'          => $fight->winner,
+                'commission_rate' => $fight->commission_rate,
+                'meron_total'     => (string) $meronTotal,
+                'wala_total'      => (string) $walaTotal,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error("📡 [API] Exception in show(): " . $e->getMessage() . "\n" . $e->getTraceAsString());
+            return response()->json([
+                'error' => 'Server error: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     // POST /api/fight
     public function store(Request $request)
     {
@@ -331,6 +373,81 @@ class FightController extends Controller
         broadcast(new WinnerDeclared($fight));
 
         return response()->json(['message' => 'Winner declared and payouts calculated.']);
+    }
+
+    // POST /api/fight/{fight}/reannounce-winner
+    public function reannounceWinner(Request $request, Fight $fight)
+    {
+        try {
+            $request->validate([
+                'winner' => ['required', 'in:meron,wala,draw,cancelled'],
+            ]);
+
+            if ($fight->status !== 'done') {
+                return response()->json([
+                    'message' => 'Only completed fights can have the winner reannounced.',
+                ], 422);
+            }
+
+            \Log::info("📡 [API] Reannouncing winner for fight #{$fight->fight_number}");
+
+            // Clear existing payouts for this fight
+            $fight->payouts()->delete();
+            \Log::info("📡 [API] Cleared old payouts for fight #{$fight->fight_number}");
+
+            // Update winner
+            $fight->winner = $request->winner;
+            $fight->save();
+            \Log::info("📡 [API] Updated winner to {$request->winner} for fight #{$fight->fight_number}");
+
+            // Recalculate payouts
+            PayoutCalculator::calculate($fight);
+            \Log::info("📡 [API] Recalculated payouts for fight #{$fight->fight_number}");
+
+            AuditLogger::log('reannounced_winner', 'fight', $fight->id, [
+                'winner' => $fight->winner,
+            ]);
+
+            // Update TellerCash for all tellers with bets in this fight
+            $tellerIds = Bet::where('fight_id', $fight->id)
+                ->distinct('teller_id')
+                ->pluck('teller_id')
+                ->toArray();
+
+            \Log::info("📡 [API] Found " . count($tellerIds) . " tellers with bets");
+
+            foreach ($tellerIds as $tellerId) {
+                $tellerCash = TellerCash::updateTellerCash($tellerId);
+
+                // Get teller info for broadcast
+                $teller = \App\Models\User::find($tellerId);
+
+                // Broadcast cash status update for each affected teller
+                broadcast(new TellerCashStatusUpdated(
+                    $tellerId,
+                    $teller->name,
+                    $tellerCash->on_hand_cash,
+                    'winner_reannounced',
+                    0
+                ));
+            }
+
+            broadcast(new WinnerDeclared($fight));
+            \Log::info("📡 [API] Successfully reannounced winner for fight #{$fight->fight_number}");
+
+            return response()->json(['message' => 'Winner reannounced and payouts recalculated.']);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error("📡 [API] Validation error in reannounceWinner: " . json_encode($e->errors()));
+            return response()->json([
+                'message' => 'Validation failed.',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error("📡 [API] Exception in reannounceWinner: " . $e->getMessage() . "\n" . $e->getTraceAsString());
+            return response()->json([
+                'message' => 'Failed to reannounce winner: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     // GET /api/fight/history

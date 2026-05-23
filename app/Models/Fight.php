@@ -41,6 +41,11 @@ class Fight extends Model
         return $this->hasMany(Bet::class, 'fight_id');
     }
 
+    public function payouts()
+    {
+        return $this->hasManyThrough(Payout::class, Bet::class, 'fight_id', 'bet_id');
+    }
+
     // ─── Helpers ─────────────────────────────────────
 
     public function totalBets(): float

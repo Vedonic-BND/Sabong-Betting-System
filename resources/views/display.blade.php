@@ -247,30 +247,45 @@ document.addEventListener('DOMContentLoaded', function () {
             console.error('WS error:', err);
         });
 
+        // ── Track current active fight ────────────────
+        let currentActiveFightNumber = {{ $fight ? $fight->fight_number : 'null' }};
+        let currentActiveFightStatus = '{{ $fight ? $fight->status : 'null' }}';
+        let announcementTimeout = null;
+
         // ── Listen for events ─────────────────────────
         window.Echo.channel('fights')
             .listen('.fight.updated', (data) => {
-                document.getElementById('fight-number').textContent =
-                    'Fight #' + data.fight_number;
-                updateStatus(data.status);
+                // Only update currentActiveFightNumber if status is 'open', 'closed', or 'pending'
+                // (don't update for 'done' status which indicates a historical fight reannouncement)
+                if (['open', 'closed', 'pending'].includes(data.status)) {
+                    currentActiveFightNumber = data.fight_number;
+                    currentActiveFightStatus = data.status;
+                }
 
-                if (data.status === 'open' || data.status === 'pending') {
-                    document.getElementById('winner-overlay').classList.add('hidden');
-                    document.getElementById('betting-panel').classList.remove('hidden');
-                    document.getElementById('meron-total').textContent =
-                        formatMoney(data.meron_total);
-                    document.getElementById('wala-total').textContent =
-                        formatMoney(data.wala_total);
+                // Only update display if we're not showing an announcement
+                if (!document.getElementById('winner-overlay').classList.contains('announcement-active')) {
+                    document.getElementById('fight-number').textContent =
+                        'Fight #' + data.fight_number;
+                    updateStatus(data.status);
 
-                    const total   = parseFloat(data.meron_total) + parseFloat(data.wala_total);
-                    const netPool = total * 0.95;
-                    const meron   = parseFloat(data.meron_total);
-                    const wala    = parseFloat(data.wala_total);
+                    if (data.status === 'open' || data.status === 'pending') {
+                        document.getElementById('winner-overlay').classList.add('hidden');
+                        document.getElementById('betting-panel').classList.remove('hidden');
+                        document.getElementById('meron-total').textContent =
+                            formatMoney(data.meron_total);
+                        document.getElementById('wala-total').textContent =
+                            formatMoney(data.wala_total);
 
-                    document.getElementById('meron-multiplier').textContent =
-                        meron > 0 ? (netPool / meron * 100).toFixed(2) + '%' : '—';
-                    document.getElementById('wala-multiplier').textContent =
-                        wala > 0 ? (netPool / wala * 100).toFixed(2) + '%' : '—';
+                        const total   = parseFloat(data.meron_total) + parseFloat(data.wala_total);
+                        const netPool = total * 0.95;
+                        const meron   = parseFloat(data.meron_total);
+                        const wala    = parseFloat(data.wala_total);
+
+                        document.getElementById('meron-multiplier').textContent =
+                            meron > 0 ? (netPool / meron * 100).toFixed(2) + '%' : '—';
+                        document.getElementById('wala-multiplier').textContent =
+                            wala > 0 ? (netPool / wala * 100).toFixed(2) + '%' : '—';
+                    }
                 }
             })
             .listen('.bet.placed', (data) => {
@@ -306,8 +321,39 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.log('🗑️ UI Updated');
             })
             .listen('.winner.declared', (data) => {
-                updateStatus('done');
-                showWinner(data.winner, data.fight_number);
+                console.log('🎯 Winner declared for Fight #' + data.fight_number + ', Current active: #' + currentActiveFightNumber);
+
+                // Check if this is a reannouncement (not the current active fight)
+                const isReannouncement = data.fight_number != currentActiveFightNumber;
+
+                if (isReannouncement) {
+                    console.log('📢 REANNOUNCEMENT: Showing Fight #' + data.fight_number + ' announcement');
+                    // Add announcement-active class to prevent updates
+                    document.getElementById('winner-overlay').classList.add('announcement-active');
+
+                    // Show the reannounced fight
+                    document.getElementById('fight-number').textContent = 'Fight #' + data.fight_number;
+                    updateStatus('done'); // Reannounced fights are always done
+                    showWinner(data.winner, data.fight_number);
+
+                    // Clear any previous timeout
+                    if (announcementTimeout) clearTimeout(announcementTimeout);
+
+                    // Return to current fight after 8 seconds
+                    announcementTimeout = setTimeout(() => {
+                        console.log('⏱️ Announcement timeout. Returning to current fight #' + currentActiveFightNumber + ' (status: ' + currentActiveFightStatus + ')');
+                        document.getElementById('winner-overlay').classList.remove('announcement-active');
+                        document.getElementById('winner-overlay').classList.add('hidden');
+                        document.getElementById('betting-panel').classList.remove('hidden');
+                        document.getElementById('fight-number').textContent = 'Fight #' + currentActiveFightNumber;
+                        updateStatus(currentActiveFightStatus); // Use the actual current fight status
+                    }, 8000);
+                } else {
+                    // This is the current active fight - declare winner normally
+                    console.log('🏁 Current fight winner declared');
+                    updateStatus('done');
+                    showWinner(data.winner, data.fight_number);
+                }
             });
 
         function updateSideStatus(meron_status, wala_status) {

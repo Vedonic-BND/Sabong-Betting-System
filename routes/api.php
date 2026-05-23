@@ -53,12 +53,14 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::middleware('role:admin')->group(function () {
         Route::post('/fight', [FightController::class, 'store']);
         Route::post('/fight/reset', [FightController::class, 'reset']);
+        Route::get('/fight/history', [FightController::class, 'history']);
+        Route::get('/fight/{fight}', [FightController::class, 'show']);
         Route::put('/fight/{fight}/status', [FightController::class, 'updateStatus']);
         Route::post('/fight/{fight}/winner', [FightController::class, 'declareWinner']);
+        Route::post('/fight/{fight}/reannounce-winner', [FightController::class, 'reannounceWinner']);
         Route::put('/fight/{fight}/side-status', [FightController::class, 'updateSideStatus']);
         Route::put('/fight/{fight}/all-side-status', [FightController::class, 'allSideStatus']);
         Route::post('/fight/{fight}/finalize', [FightController::class, 'finalizeBet']);
-        Route::get('/fight/history', [FightController::class, 'history']);
 
         // Admin bet history management
         Route::get('/admin/bet/history', [BetController::class, 'adminHistory']);
