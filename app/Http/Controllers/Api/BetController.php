@@ -11,6 +11,7 @@ use App\Models\Fight;
 use App\Models\TellerCash;
 use App\Services\AuditLogger;
 use App\Services\QrGenerator;
+use Illuminate\Broadcasting\Channel;
 use Illuminate\Http\Request;
 
 class BetController extends Controller
@@ -232,6 +233,8 @@ class BetController extends Controller
     // DELETE /api/admin/bet/{id} — Delete a bet placed by admin
     public function adminDestroyBet(Request $request, $betId)
     {
+        \Log::info("🗑️ [DELETE ENDPOINT] Called for Bet ID: $betId");
+
         $user = $request->user();
 
         $bet = Bet::where('id', $betId)
@@ -239,10 +242,22 @@ class BetController extends Controller
             ->first();
 
         if (!$bet) {
+            \Log::warning("🗑️ [DELETE ENDPOINT] Bet $betId not found or unauthorized");
             return response()->json([
                 'message' => 'Bet not found or unauthorized.',
             ], 404);
         }
+
+        // Log before deletion
+        $fightId = $bet->fight_id;
+        $betSide = $bet->side;
+        $betAmount = $bet->amount;
+        $tellerName = $bet->teller->name ?? '—';
+        \Log::info("🎯 [BEFORE DELETE] Bet ID: $betId, Fight ID: $fightId, Side: {$bet->side}, Amount: {$bet->amount}");
+
+        // Get fight before deletion to show totals
+        $fightBefore = Fight::find($fightId);
+        \Log::info("📊 [BEFORE DELETE] Fight $fightId totals - Meron: {$fightBefore->meronTotal()}, Wala: {$fightBefore->walaTotal()}");
 
         // Log the deletion
         AuditLogger::log('deleted_bet', 'bet', $bet->id, [
@@ -251,14 +266,41 @@ class BetController extends Controller
             'amount'    => $bet->amount,
         ]);
 
-        // Broadcast bet deletion event synchronously before deleting
-        \Log::info('🎯 Broadcasting bet deletion for bet ID ' . $bet->id);
-        broadcast(new BetDeleted($bet))->toOthers();
+        // Actually delete the bet FIRST
+        $deleteResult = $bet->delete();
+        \Log::info("🗑️ [DELETE RESULT] Bet deletion returned: " . ($deleteResult ? 'TRUE' : 'FALSE'));
 
-        $bet->delete();
+        // Get fight AFTER deletion to get correct totals
+        $fightAfter = Fight::find($fightId);
+        \Log::info("📊 [AFTER DELETE] Fight $fightId totals - Meron: {$fightAfter->meronTotal()}, Wala: {$fightAfter->walaTotal()}");
+
+        // Prepare broadcast data BEFORE creating event
+        $broadcastData = [
+            'fight_id'      => $fightId,
+            'fight_number'  => $fightAfter->fight_number ?? null,
+            'status'        => $fightAfter->status ?? 'pending',
+            'meron_status'  => $fightAfter->meron_status ?? 'open',
+            'wala_status'   => $fightAfter->wala_status ?? 'open',
+            'side'          => $betSide,
+            'amount'        => $betAmount,
+            'teller'        => $tellerName,
+            'meron_total'   => (float)$fightAfter->meronTotal(),
+            'wala_total'    => (float)$fightAfter->walaTotal(),
+        ];
+
+        \Log::info("📡 [BROADCAST DATA] Prepared: " . json_encode($broadcastData));
+
+        // Broadcast with shouldQueue=false means it goes directly to Reverb, not the queue
+        \Log::info("🎯 [BROADCAST] Dispatching BetDeleted event (shouldQueue=false, so synchronous)");
+        broadcast(new BetDeleted($bet, $broadcastData))->toOthers();
+
+        // Verify bet was actually deleted
+        $betStillExists = Bet::find($betId);
+        \Log::info("🔍 [VERIFICATION] Bet $betId still exists: " . ($betStillExists ? 'YES (ERROR!)' : 'NO (Correct)'));
 
         return response()->json([
             'message' => 'Bet deleted successfully.',
         ], 200);
     }
 }
+

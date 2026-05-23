@@ -19,27 +19,58 @@ class FightController extends Controller
     // GET /api/fight/current
     public function current()
     {
-        $fight = Fight::whereIn('status', ['open', 'closed', 'pending'])
-            ->whereNull('session_date') // only current session fights
-            ->orderByRaw("FIELD(status, 'open', 'closed', 'pending')")
-            ->latest()
-            ->first();
+        \Log::info("📡 [API] /api/fight/current endpoint called");
 
-        if (!$fight) {
-            return response()->json(['message' => 'No active fight.'], 404);
+        try {
+            $fight = Fight::whereIn('status', ['open', 'closed', 'pending'])
+                ->whereNull('session_date') // only current session fights
+                ->orderByRaw("FIELD(status, 'open', 'closed', 'pending')")
+                ->latest()
+                ->first();
+
+            if (!$fight) {
+                \Log::info("📡 [API] No active fight found");
+                return response()->json(['message' => 'No active fight.'], 404);
+            }
+
+            \Log::info("📡 [API] Found fight #{$fight->fight_number}, calculating totals...");
+
+            $meronTotal = 0;
+            $walaTotal = 0;
+
+            try {
+                $meronTotal = $fight->meronTotal();
+                \Log::info("📡 [API] Meron total calculated: {$meronTotal}");
+            } catch (\Exception $e) {
+                \Log::error("📡 [API] Error calculating meronTotal: " . $e->getMessage());
+            }
+
+            try {
+                $walaTotal = $fight->walaTotal();
+                \Log::info("📡 [API] Wala total calculated: {$walaTotal}");
+            } catch (\Exception $e) {
+                \Log::error("📡 [API] Error calculating walaTotal: " . $e->getMessage());
+            }
+
+            \Log::info("📡 [API] /api/fight/current returning Fight #{$fight->fight_number}: meron={$meronTotal}, wala={$walaTotal}");
+
+            return response()->json([
+                'id'              => $fight->id,
+                'fight_number'    => $fight->fight_number,
+                'status'          => $fight->status,
+                'meron_status'    => $fight->meron_status,
+                'wala_status'     => $fight->wala_status,
+                'winner'          => $fight->winner,
+                'commission_rate' => $fight->commission_rate,
+                'meron_total'     => (string) $meronTotal,
+                'wala_total'      => (string) $walaTotal,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error("📡 [API] Exception in current(): " . $e->getMessage() . "\n" . $e->getTraceAsString());
+            return response()->json([
+                'error' => 'Server error: ' . $e->getMessage()
+            ], 500);
         }
-
-        return response()->json([
-            'id'              => $fight->id,
-            'fight_number'    => $fight->fight_number,
-            'status'          => $fight->status,
-            'meron_status'    => $fight->meron_status,
-            'wala_status'     => $fight->wala_status,
-            'winner'          => $fight->winner,
-            'commission_rate' => $fight->commission_rate,
-            'meron_total'     => (string) $fight->meronTotal(),
-            'wala_total'      => (string) $fight->walaTotal(),
-        ]);
     }
 
     // POST /api/fight

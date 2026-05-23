@@ -210,43 +210,7 @@
             s.className = 'text-xs px-2 py-0.5 rounded-full bg-red-900 text-red-400';
         });
 
-        window.Echo.channel('fights')
-            .listen('.fight.updated', (data) => {
-                document.getElementById('fight-number').textContent =
-                    'Fight #' + data.fight_number;
-                updateStatus(data.status);
-
-                // reset winner overlay if new fight opened
-                if (data.status === 'open' || data.status === 'pending') {
-                    document.getElementById('winner-overlay').classList.add('hidden');
-                    document.getElementById('betting-panel').classList.remove('hidden');
-                    document.getElementById('meron-total').textContent =
-                        formatMoney(data.meron_total);
-                    document.getElementById('wala-total').textContent =
-                        formatMoney(data.wala_total);
-                }
-            })
-            .listen('.bet.placed', (data) => {
-                const meronTotal = parseFloat(data.meron_total ?? 0);
-                const walaTotal  = parseFloat(data.wala_total ?? 0);
-                const totalPool  = meronTotal + walaTotal;
-                const netPool    = totalPool * 0.95;
-
-                document.getElementById('meron-total').textContent = formatMoney(meronTotal);
-                document.getElementById('wala-total').textContent  = formatMoney(walaTotal);
-
-                // update multipliers
-                document.getElementById('meron-multiplier').textContent =
-                    meronTotal > 0 ? (netPool / meronTotal * 100).toFixed(2) + '%' : '100.00%';
-                document.getElementById('wala-multiplier').textContent =
-                    walaTotal > 0 ? (netPool / walaTotal * 100).toFixed(2) + '%' : '100.00%';
-
-                addFeedItem(data.side, data.amount, data.teller);
-            })
-            .listen('.winner.declared', (data) => {
-                updateStatus('done');
-                showWinner(data.winner, data.fight_number);
-            });
+        // First channel connection moved to DOMContentLoaded below
     </script>
 
     <script>
@@ -310,6 +274,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             })
             .listen('.bet.placed', (data) => {
+                console.log('✅ BET.PLACED EVENT RECEIVED:', data);
                 const meronTotal = parseFloat(data.meron_total ?? 0);
                 const walaTotal  = parseFloat(data.wala_total ?? 0);
                 const totalPool  = meronTotal + walaTotal;
@@ -322,6 +287,23 @@ document.addEventListener('DOMContentLoaded', function () {
                     meronTotal > 0 ? (netPool / meronTotal * 100).toFixed(2) + '%' : '—';
                 document.getElementById('wala-multiplier').textContent =
                     walaTotal > 0 ? (netPool / walaTotal * 100).toFixed(2) + '%' : '—';
+            })
+            .listen('.bet.deleted', (data) => {
+                console.log('🗑️ BET.DELETED EVENT RECEIVED:', data);
+                const meronTotal = parseFloat(data.meron_total ?? 0);
+                const walaTotal  = parseFloat(data.wala_total ?? 0);
+                const totalPool  = meronTotal + walaTotal;
+                const netPool    = totalPool * 0.95;
+
+                console.log('🗑️ Updating UI - Meron:', meronTotal, 'Wala:', walaTotal);
+                document.getElementById('meron-total').textContent = formatMoney(meronTotal);
+                document.getElementById('wala-total').textContent  = formatMoney(walaTotal);
+
+                document.getElementById('meron-multiplier').textContent =
+                    meronTotal > 0 ? (netPool / meronTotal * 100).toFixed(2) + '%' : '—';
+                document.getElementById('wala-multiplier').textContent =
+                    walaTotal > 0 ? (netPool / walaTotal * 100).toFixed(2) + '%' : '—';
+                console.log('🗑️ UI Updated');
             })
             .listen('.winner.declared', (data) => {
                 updateStatus('done');

@@ -45,17 +45,35 @@ class Fight extends Model
 
     public function totalBets(): float
     {
-        return $this->bets()->sum('amount');
+        try {
+            $total = $this->bets()->sum('amount');
+            return $total;
+        } catch (\Exception $e) {
+            \Log::error("Error in totalBets(): " . $e->getMessage());
+            return 0;
+        }
     }
 
     public function meronTotal(): float
     {
-        return $this->bets()->where('side', 'meron')->sum('amount');
+        try {
+            $meronTotal = $this->bets()->where('side', 'meron')->sum('amount');
+            return $meronTotal;
+        } catch (\Exception $e) {
+            \Log::error("Error in meronTotal(): " . $e->getMessage());
+            return 0;
+        }
     }
 
     public function walaTotal(): float
     {
-        return $this->bets()->where('side', 'wala')->sum('amount');
+        try {
+            $walaTotal = $this->bets()->where('side', 'wala')->sum('amount');
+            return $walaTotal;
+        } catch (\Exception $e) {
+            \Log::error("Error in walaTotal(): " . $e->getMessage());
+            return 0;
+        }
     }
 
     public function isOpen(): bool
