@@ -388,11 +388,11 @@ document.addEventListener('DOMContentLoaded', function () {
 async function generateEodReport() {
     const btn = document.getElementById('eod-btn');
     const originalText = btn.innerHTML;
-    
+
     try {
         btn.disabled = true;
         btn.innerHTML = '<span class="inline-block animate-spin">⟳</span> Generating...';
-        
+
         // Generate the report
         const response = await fetch('{{ route("owner.eod-report.generate") }}', {
             method: 'POST',
@@ -401,13 +401,13 @@ async function generateEodReport() {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
             }
         });
-        
+
         const data = await response.json();
-        
+
         if (!data.success) {
             throw new Error(data.message || 'Failed to generate EOD report');
         }
-        
+
         // Get today's date
         const today = new Date().toISOString().split('T')[0];
         const files = [
@@ -416,9 +416,9 @@ async function generateEodReport() {
             `transactions-eod-${today}.csv`,
             `summary-eod-${today}.txt`
         ];
-        
+
         btn.innerHTML = '📥 Downloading...';
-        
+
         // Download each file
         for (const file of files) {
             const downloadUrl = '{{ route("owner.eod-report.download", ":filename") }}'.replace(':filename', file);
@@ -428,17 +428,17 @@ async function generateEodReport() {
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            
+
             // Small delay between downloads
             await new Promise(resolve => setTimeout(resolve, 500));
         }
-        
+
         btn.innerHTML = '✓ Complete';
         setTimeout(() => {
             btn.disabled = false;
             btn.innerHTML = originalText;
         }, 2000);
-        
+
     } catch (error) {
         console.error('EOD Report Error:', error);
         btn.innerHTML = '✗ Error';

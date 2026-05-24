@@ -17,7 +17,7 @@ class ExportEodReport extends Command
     {
         $date = now()->format('Y-m-d');
         $timestamp = now()->format('Y-m-d H:i:s');
-        
+
         $this->info("📊 Starting EOD Report generation for $date at $timestamp");
 
         try {
@@ -54,10 +54,10 @@ class ExportEodReport extends Command
 
             // Generate Audit Logs Report
             $this->generateAuditLogsReport($auditLogs, $auditFilename);
-            
+
             // Generate Fights Report
             $this->generateFightsReport($fights, $fightsFilename);
-            
+
             // Generate Transactions Report
             $this->generateTransactionsReport($transactions, $transactionsFilename);
 
