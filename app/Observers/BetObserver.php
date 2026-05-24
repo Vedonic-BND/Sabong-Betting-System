@@ -14,7 +14,7 @@ class BetObserver
     public function created(Bet $bet): void
     {
         \Log::info('🎲 BetObserver: New bet created for teller ' . $bet->teller_id . ' - Amount: ' . $bet->amount);
-        
+
         // Broadcast the update - this will trigger financial overview to reload
         broadcast(new TellerCashStatusUpdated(
             $bet->teller_id,
@@ -23,7 +23,7 @@ class BetObserver
             'bet_created',
             $bet->amount
         ))->toOthers();
-        
+
         \Log::info('✅ Broadcast sent for new bet on teller ' . $bet->teller_id);
     }
 }

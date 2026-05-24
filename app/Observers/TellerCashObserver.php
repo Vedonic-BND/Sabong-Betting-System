@@ -30,7 +30,7 @@ class TellerCashObserver
     public function updated(TellerCash $tellerCash): void
     {
         $changes = $tellerCash->getChanges();
-        
+
         \Log::info('🔔 TellerCashObserver.updated() called for teller ' . $tellerCash->teller_id);
         \Log::info('Changes: ' . json_encode($changes));
 
@@ -50,7 +50,7 @@ class TellerCashObserver
 
         // Actual data changed, broadcast the event
         \Log::info('✅ Broadcasting TellerCashStatusUpdated event for teller ' . $tellerCash->teller_id);
-        
+
         broadcast(new TellerCashStatusUpdated(
             $tellerCash->teller_id,
             $tellerCash->teller->name ?? 'Unknown',

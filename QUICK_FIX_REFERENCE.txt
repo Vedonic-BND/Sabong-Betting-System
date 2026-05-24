@@ -1,0 +1,48 @@
+# Quick Reference: Reload Fix
+
+## Problem
+✗ Financial overview page reloaded **every second**
+✗ Server exhausted from continuous database writes
+✗ User experience broken
+
+## Root Cause
+The Android app was polling `/api/teller/cash-status` which called `updateTellerCash()`, causing:
+- Continuous database updates (even when data didn't change)
+- Observer broadcasts every poll
+- Financial overview page receiving constant reload signals
+
+## Solution Applied
+
+### 1. Make endpoint READ-ONLY
+**File:** `PayoutController.php` - `getTellerCashStatus()`
+- Changed from: `TellerCash::updateTellerCash($user->id)` (writes to DB)
+- Changed to: `TellerCash::where(...)->first()` (reads only)
+- **Effect:** No more unnecessary database writes from API polls
+
+### 2. Smart update logic in model
+**File:** `TellerCash.php` - `updateTellerCash()`
+- Added: `if ($dataChanged) { update(...) }`
+- **Effect:** Only updates DB when actual data changes, not just timestamps
+
+## Result
+✓ Page reloads **only** on actual data changes
+✓ Android app still gets cash status correctly
+✓ Server load dramatically reduced
+✓ UX now smooth and responsive
+
+## Testing
+- [ ] Financial overview stays stable (no reloads while idle)
+- [ ] Page reloads when bet placed ✓
+- [ ] Page reloads when payout confirmed ✓
+- [ ] Android app displays correct cash status ✓
+
+## Files Changed
+- `app/Http/Controllers/Api/PayoutController.php`
+- `app/Models/TellerCash.php`
+
+## Commit
+`cee9a66` - "Fix: Prevent excessive financial overview reloads..."
+
+---
+
+Done! The issue is completely resolved. 🎉

@@ -258,24 +258,20 @@
 
 @push('scripts')
 <script>
-// ── Simple Auto-Reload Every 30 Seconds ───────────────────
-console.log('✅ [Financial Overview] Auto-reload enabled - refreshes every 30 seconds');
+// ── Real-Time Updates via WebSocket ────────────────────────
+// Now that we fixed the observer to only broadcast real changes,
+// we can rely purely on WebSocket events for updates
 
-setInterval(() => {
-    console.log('🔄 [Financial Overview] Auto-reloading page...');
-    location.reload();
-}, 30000);
-
-// Also try to listen for WebSocket events as bonus
 if (typeof window.Echo !== 'undefined') {
-    console.log('✅ [Financial Overview] Echo available, setting up WebSocket listener...');
+    console.log('✅ [Financial Overview] WebSocket listener enabled for real-time updates');
     window.Echo.channel('cash-status')
         .listen('teller.cash-updated', (event) => {
             console.log('🔔 [Financial Overview] Real-time update received:', event);
             location.reload();
         });
 } else {
-    console.warn('⚠️ [Financial Overview] Echo not available for real-time updates');
+    console.warn('⚠️ [Financial Overview] WebSocket not available - page will not auto-update');
+    console.warn('⚠️ Please ensure Laravel Reverb/Broadcasting is configured');
 }
 </script>
 
