@@ -262,33 +262,50 @@
 // Preferred: WebSocket provides immediate updates on data changes
 // Fallback: 30-second auto-reload if WebSocket unavailable
 
-let webSocketConnected = false;
+console.log('📍 [Financial Overview] Script starting...');
+console.log('📍 [Financial Overview] window.Echo defined:', typeof window.Echo !== 'undefined');
 
-if (typeof window.Echo !== 'undefined') {
-    console.log('✅ [Financial Overview] Echo available, attempting WebSocket connection...');
+// Small delay to ensure Echo is fully initialized
+setTimeout(() => {
+    console.log('📍 [Financial Overview] After delay - window.Echo defined:', typeof window.Echo !== 'undefined');
     
-    window.Echo.channel('cash-status')
-        .listen('teller.cash-updated', (event) => {
-            console.log('🔔 [Financial Overview] Real-time update received:', event);
+    let webSocketConnected = false;
+
+    if (typeof window.Echo !== 'undefined') {
+        try {
+            console.log('✅ [Financial Overview] Echo available, attempting WebSocket connection...');
+            
+            window.Echo.channel('cash-status')
+                .listen('teller.cash-updated', (event) => {
+                    console.log('🔔 [Financial Overview] Real-time update received:', event);
+                    location.reload();
+                });
+            
+            webSocketConnected = true;
+            console.log('✅ [Financial Overview] WebSocket listener active and ready');
+        } catch (error) {
+            console.error('❌ [Financial Overview] Error setting up WebSocket listener:', error);
+            console.error('Error details:', error.message);
+        }
+    } else {
+        console.warn('⚠️ [Financial Overview] Echo not available - window.Echo is undefined');
+        console.warn('This might happen if:');
+        console.warn('  1. Reverb server is not running');
+        console.warn('  2. BROADCAST_CONNECTION is set to "null" in .env');
+        console.warn('  3. echo.js failed to load');
+    }
+
+    // Fallback: Auto-reload every 30 seconds if WebSocket not working
+    // This ensures page updates even if Reverb server is down
+    if (!webSocketConnected) {
+        console.log('⏱️ [Financial Overview] WebSocket unavailable - enabling 30-second auto-reload fallback');
+        
+        setInterval(() => {
+            console.log('🔄 [Financial Overview] Auto-reloading page (fallback)...');
             location.reload();
-        });
-    
-    webSocketConnected = true;
-    console.log('✅ [Financial Overview] WebSocket listener active');
-} else {
-    console.warn('⚠️ [Financial Overview] Echo not available');
-}
-
-// Fallback: Auto-reload every 30 seconds if WebSocket not working
-// This ensures page updates even if Reverb server is down
-if (!webSocketConnected) {
-    console.log('⏱️ [Financial Overview] WebSocket unavailable - enabling 30-second auto-reload fallback');
-    
-    setInterval(() => {
-        console.log('🔄 [Financial Overview] Auto-reloading page (fallback)...');
-        location.reload();
-    }, 30000);
-}
+        }, 30000);
+    }
+}, 1000);  // Wait 1 second for Echo to initialize
 </script>
 
 <style>
