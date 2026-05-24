@@ -258,59 +258,18 @@
 
 @push('scripts')
 <script>
-// ── Real-Time Updates via WebSocket ────────────────────────
-// Preferred: WebSocket provides immediate updates on data changes
-// Fallback: 30-second auto-reload if WebSocket unavailable
+// ── Auto-Reload Every 15 Seconds (Only When Page is Visible) ───────────────────
+console.log('✅ [Financial Overview] Auto-reload enabled - refreshes every 15 seconds when page is visible');
 
-console.log('📍 [Financial Overview] Script starting...');
-console.log('📍 [Financial Overview] window.Echo defined:', typeof window.Echo !== 'undefined');
-
-// Small delay to ensure Echo is fully initialized
-setTimeout(() => {
-    console.log('📍 [Financial Overview] After delay - window.Echo defined:', typeof window.Echo !== 'undefined');
-    
-    let webSocketConnected = false;
-
-    if (typeof window.Echo !== 'undefined') {
-        try {
-            console.log('✅ [Financial Overview] Echo available, attempting WebSocket connection...');
-            
-            // Set up the listener
-            const listener = window.Echo.channel('cash-status')
-                .listen('teller.cash-updated', (event) => {
-                    console.log('🔔 [Financial Overview] RECEIVED EVENT from WebSocket:', event);
-                    console.log('🔔 [Financial Overview] Event timestamp:', new Date().toLocaleTimeString());
-                    location.reload();
-                });
-            
-            console.log('📍 [Financial Overview] Listener setup object:', listener);
-            webSocketConnected = true;
-            console.log('✅ [Financial Overview] WebSocket listener active and ready');
-            console.log('🎯 [Financial Overview] Waiting for events on channel: cash-status');
-            console.log('🎯 [Financial Overview] Listening for event name: teller.cash-updated');
-        } catch (error) {
-            console.error('❌ [Financial Overview] Error setting up WebSocket listener:', error);
-            console.error('Error details:', error.message);
-        }
+setInterval(() => {
+    // Only reload if the page is actually visible (not minimized/hidden)
+    if (!document.hidden) {
+        console.log('🔄 [Financial Overview] Auto-reloading page...');
+        location.reload();
     } else {
-        console.warn('⚠️ [Financial Overview] Echo not available - window.Echo is undefined');
-        console.warn('This might happen if:');
-        console.warn('  1. Reverb server is not running');
-        console.warn('  2. BROADCAST_CONNECTION is set to "null" in .env');
-        console.warn('  3. echo.js failed to load');
+        console.log('⏸️ [Financial Overview] Page hidden - skipping reload');
     }
-
-    // Fallback: Auto-reload every 30 seconds if WebSocket not working
-    // This ensures page updates even if Reverb server is down
-    if (!webSocketConnected) {
-        console.log('⏱️ [Financial Overview] WebSocket unavailable - enabling 30-second auto-reload fallback');
-        
-        setInterval(() => {
-            console.log('🔄 [Financial Overview] Auto-reloading page (fallback)...');
-            location.reload();
-        }, 30000);
-    }
-}, 1000);  // Wait 1 second for Echo to initialize
+}, 15000);
 </script>
 
 <style>

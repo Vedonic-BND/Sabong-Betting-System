@@ -52,15 +52,6 @@ Route::post('/manage/logout', [AuthenticatedSessionController::class, 'destroy']
 
 /*
 |--------------------------------------------------------------------------
-| TEST BROADCAST (PUBLIC FOR TESTING)
-|--------------------------------------------------------------------------
-*/
-
-Route::get('/test-broadcast', [\App\Http\Controllers\TestBroadcastController::class, 'test'])
-    ->name('test.broadcast');
-
-/*
-|--------------------------------------------------------------------------
 | OWNER PANEL
 |--------------------------------------------------------------------------
 */
@@ -111,6 +102,10 @@ Route::middleware(['auth', 'role:owner'])
         // reports
         Route::get('/audit-logs/export', [ExportController::class, 'auditLogs'])
             ->name('audit-logs.export');
+        Route::post('/eod-report/generate', [ExportController::class, 'generateEodReport'])
+            ->name('eod-report.generate');
+        Route::get('/eod-report/download/{filename}', [ExportController::class, 'downloadEodReport'])
+            ->name('eod-report.download');
 
         // notifications
         Route::get('/notifications/export', [\App\Http\Controllers\Owner\NotificationController::class, 'export'])

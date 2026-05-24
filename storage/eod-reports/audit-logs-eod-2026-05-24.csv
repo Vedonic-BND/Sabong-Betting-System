@@ -1,0 +1,128 @@
+﻿ID,"Date & Time",User,Role,Action,"Target Type","Target ID",Details,"IP Address"
+23,"2026-05-24 00:36:32",Admin,admin,"placed bet",bet,11,"side: meron, amount: 5000.00",192.168.1.10
+24,"2026-05-24 00:38:01",Admin,admin,"placed bet",bet,12,"side: wala, amount: 5000.00",192.168.1.10
+25,"2026-05-24 00:38:11",Admin,admin,"deleted bet",bet,12,"reference: OUF-266847, side: wala, amount: 5000.00",192.168.1.10
+26,"2026-05-24 00:38:20",Admin,admin,"deleted bet",bet,11,"reference: CHO-432656, side: meron, amount: 5000.00",192.168.1.10
+27,"2026-05-24 00:41:21",Admin,admin,"placed bet",bet,13,"side: meron, amount: 5000.00",192.168.1.10
+28,"2026-05-24 00:41:31",Admin,admin,"deleted bet",bet,13,"reference: DJM-314512, side: meron, amount: 5000.00",192.168.1.10
+29,"2026-05-24 00:45:40",Admin,admin,"placed bet",bet,14,"side: meron, amount: 5000.00",192.168.1.10
+30,"2026-05-24 00:45:50",Admin,admin,"placed bet",bet,15,"side: wala, amount: 5000.00",192.168.1.10
+31,"2026-05-24 00:46:00",Admin,admin,"deleted bet",bet,15,"reference: NTX-662278, side: wala, amount: 5000.00",192.168.1.10
+32,"2026-05-24 00:46:08",Admin,admin,"deleted bet",bet,14,"reference: 2IW-225764, side: meron, amount: 5000.00",192.168.1.10
+33,"2026-05-24 01:52:33",Admin,admin,"placed bet",bet,16,"side: meron, amount: 5000.00",192.168.1.10
+34,"2026-05-24 01:52:45",Admin,admin,"placed bet",bet,17,"side: wala, amount: 5000.00",192.168.1.10
+35,"2026-05-24 01:52:52",Admin,admin,"deleted bet",bet,17,"reference: S8Y-994561, side: wala, amount: 5000.00",192.168.1.10
+36,"2026-05-24 01:56:20",Admin,admin,"placed bet",bet,18,"side: wala, amount: 5000.00",192.168.1.10
+37,"2026-05-24 01:57:41",Admin,admin,"placed bet",bet,19,"side: meron, amount: 5000.00",192.168.1.10
+38,"2026-05-24 01:59:31",Admin,admin,"placed bet",bet,20,"side: wala, amount: 5000.00",192.168.1.10
+39,"2026-05-24 01:59:42",Admin,admin,"deleted bet",bet,16,"reference: 5HN-638277, side: meron, amount: 5000.00",192.168.1.10
+40,"2026-05-24 02:02:13",Admin,admin,"deleted bet",bet,20,"reference: XJT-159027, side: wala, amount: 5000.00",192.168.1.10
+41,"2026-05-24 02:07:11",Admin,admin,"deleted bet",bet,19,"reference: MTG-685979, side: meron, amount: 5000.00",192.168.1.10
+42,"2026-05-24 02:09:13",Admin,admin,"placed bet",bet,21,"side: meron, amount: 5000.00",192.168.1.10
+43,"2026-05-24 02:12:00",Admin,admin,"placed bet",bet,22,"side: meron, amount: 5000.00",192.168.1.10
+44,"2026-05-24 02:12:26",Admin,admin,"deleted bet",bet,22,"reference: YKX-721682, side: meron, amount: 5000.00",192.168.1.10
+45,"2026-05-24 02:12:32",Admin,admin,"placed bet",bet,23,"side: meron, amount: 5000.00",192.168.1.10
+46,"2026-05-24 02:16:29",Admin,admin,"deleted bet",bet,23,"reference: XJ6-523618, side: meron, amount: 5000.00",192.168.1.10
+47,"2026-05-24 02:20:52",Admin,admin,"deleted bet",bet,18,"reference: XSS-304926, side: wala, amount: 5000.00",192.168.1.10
+48,"2026-05-24 02:22:18",Admin,admin,"placed bet",bet,24,"side: wala, amount: 5000.00",192.168.1.10
+49,"2026-05-24 02:23:24",Admin,admin,"placed bet",bet,25,"side: wala, amount: 5000.00",192.168.1.10
+50,"2026-05-24 02:23:33",Admin,admin,"deleted bet",bet,25,"reference: 54G-756837, side: wala, amount: 5000.00",192.168.1.10
+51,"2026-05-24 02:28:08",Admin,admin,"placed bet",bet,26,"side: meron, amount: 5000.00",192.168.1.10
+52,"2026-05-24 02:28:18",Admin,admin,"deleted bet",bet,21,"reference: 0LT-149773, side: meron, amount: 5000.00",192.168.1.10
+53,"2026-05-24 02:30:15",Admin,admin,"placed bet",bet,27,"side: meron, amount: 5000.00",192.168.1.10
+54,"2026-05-24 02:30:26",Admin,admin,"deleted bet",bet,26,"reference: J5S-927618, side: meron, amount: 5000.00",192.168.1.10
+55,"2026-05-24 02:32:12",Admin,admin,"placed bet",bet,28,"side: meron, amount: 5000.00",192.168.1.10
+56,"2026-05-24 02:32:19",Admin,admin,"placed bet",bet,29,"side: wala, amount: 5000.00",192.168.1.10
+57,"2026-05-24 02:32:27",Admin,admin,"deleted bet",bet,29,"reference: EUN-446278, side: wala, amount: 5000.00",192.168.1.10
+58,"2026-05-24 02:32:34",Admin,admin,"deleted bet",bet,28,"reference: SAJ-311660, side: meron, amount: 5000.00",192.168.1.10
+59,"2026-05-24 02:32:39",Admin,admin,"deleted bet",bet,27,"reference: JGB-382973, side: meron, amount: 5000.00",192.168.1.10
+60,"2026-05-24 02:43:02",Admin,admin,"placed bet",bet,30,"side: meron, amount: 5000.00",192.168.1.10
+61,"2026-05-24 02:43:09",Admin,admin,"deleted bet",bet,30,"reference: TX5-401411, side: meron, amount: 5000.00",192.168.1.10
+62,"2026-05-24 02:43:12",Admin,admin,"deleted bet",bet,24,"reference: UQE-772987, side: wala, amount: 5000.00",192.168.1.10
+63,"2026-05-24 02:43:17",Admin,admin,"updated all side status",fight,1,"status: closed",192.168.1.10
+64,"2026-05-24 02:43:18",Admin,admin,"finalized bet",fight,1,,192.168.1.10
+65,"2026-05-24 02:43:22",Admin,admin,"declared winner",fight,1,"winner: cancelled",192.168.1.10
+66,"2026-05-24 03:39:14",Admin,admin,"reannounced winner",fight,1,"winner: draw",192.168.1.10
+67,"2026-05-24 03:39:40",Admin,admin,"created fight",fight,2,"fight_number: 2",192.168.1.10
+68,"2026-05-24 03:41:04",Admin,admin,"updated all side status",fight,2,"status: open",192.168.1.10
+69,"2026-05-24 03:41:17","Teller 1",teller,"placed bet",bet,31,"side: meron, amount: 500.00",192.168.1.23
+70,"2026-05-24 03:41:32","Teller 1",teller,"placed bet",bet,32,"side: wala, amount: 500.00",192.168.1.23
+71,"2026-05-24 03:41:50",Admin,admin,"updated all side status",fight,2,"status: closed",192.168.1.10
+72,"2026-05-24 03:41:51",Admin,admin,"finalized bet",fight,2,,192.168.1.10
+73,"2026-05-24 03:41:56",Admin,admin,"declared winner",fight,2,"winner: meron",192.168.1.10
+74,"2026-05-24 03:42:13",Admin,admin,"reannounced winner",fight,2,"winner: wala",192.168.1.10
+75,"2026-05-24 03:42:46",Admin,admin,"reannounced winner",fight,2,"winner: meron",192.168.1.10
+76,"2026-05-24 03:43:02",Admin,admin,"reannounced winner",fight,2,"winner: wala",192.168.1.10
+77,"2026-05-24 03:43:18",Admin,admin,"created fight",fight,3,"fight_number: 3",192.168.1.10
+78,"2026-05-24 03:43:38",Admin,admin,"reannounced winner",fight,2,"winner: meron",192.168.1.10
+79,"2026-05-24 03:47:49",Admin,admin,"reannounced winner",fight,2,"winner: wala",192.168.1.10
+80,"2026-05-24 03:53:15",Admin,admin,"updated all side status",fight,3,"status: open",192.168.1.10
+81,"2026-05-24 03:53:21",Admin,admin,"updated all side status",fight,3,"status: closed",192.168.1.10
+82,"2026-05-24 03:54:21",Admin,admin,"reannounced winner",fight,2,"winner: meron",192.168.1.10
+83,"2026-05-24 03:54:41",Admin,admin,"declared winner",fight,3,"winner: cancelled",192.168.1.10
+84,"2026-05-24 03:55:56",Admin,admin,"created fight",fight,4,"fight_number: 4",192.168.1.10
+85,"2026-05-24 03:56:10",Admin,admin,"reannounced winner",fight,2,"winner: wala",192.168.1.10
+86,"2026-05-24 03:57:02",Admin,admin,"reset fight counter",system,—,"message: Fight counter reset to 1. New session started., session_date: 2026-05-24, fights_in_previous_session: 4, total_fights_preserved: 4",192.168.1.10
+87,"2026-05-24 03:57:06",Admin,admin,"created fight",fight,5,"fight_number: 1",192.168.1.10
+88,"2026-05-24 03:57:10",Admin,admin,"updated all side status",fight,5,"status: open",192.168.1.10
+89,"2026-05-24 03:57:24","Teller 1",teller,"placed bet",bet,33,"side: meron, amount: 5000.00",192.168.1.23
+90,"2026-05-24 03:57:33","Teller 1",teller,"placed bet",bet,34,"side: wala, amount: 5000.00",192.168.1.23
+91,"2026-05-24 03:57:52",Admin,admin,"updated all side status",fight,5,"status: closed",192.168.1.10
+92,"2026-05-24 03:57:53",Admin,admin,"finalized bet",fight,5,,192.168.1.10
+93,"2026-05-24 03:57:57",Admin,admin,"declared winner",fight,5,"winner: wala",192.168.1.10
+94,"2026-05-24 03:58:09",Admin,admin,"reannounced winner",fight,5,"winner: meron",192.168.1.10
+95,"2026-05-24 03:58:32",Admin,admin,"created fight",fight,6,"fight_number: 2",192.168.1.10
+96,"2026-05-24 03:58:43",Admin,admin,"reannounced winner",fight,5,"winner: wala",192.168.1.10
+97,"2026-05-24 03:59:49",Admin,admin,"reannounced winner",fight,5,"winner: meron",192.168.1.10
+98,"2026-05-24 04:03:03",Admin,admin,"reset fight counter",system,—,"message: Fight counter reset to 1. New session started., session_date: 2026-05-24, fights_in_previous_session: 2, total_fights_preserved: 6",192.168.1.10
+99,"2026-05-24 04:03:14",Admin,admin,"created fight",fight,7,"fight_number: 1",192.168.1.10
+100,"2026-05-24 04:03:32",Admin,admin,"updated all side status",fight,7,"status: open",192.168.1.10
+101,"2026-05-24 04:03:40","Teller 1",teller,"placed bet",bet,35,"side: wala, amount: 5000.00",192.168.1.23
+102,"2026-05-24 04:03:51","Teller 1",teller,"placed bet",bet,36,"side: meron, amount: 5000.00",192.168.1.23
+103,"2026-05-24 04:03:58",Admin,admin,"finalized bet",fight,7,,192.168.1.10
+104,"2026-05-24 04:03:59",Admin,admin,"updated all side status",fight,7,"status: closed",192.168.1.10
+105,"2026-05-24 04:04:04",Admin,admin,"declared winner",fight,7,"winner: meron",192.168.1.10
+106,"2026-05-24 04:04:14",Admin,admin,"created fight",fight,8,"fight_number: 2",192.168.1.10
+107,"2026-05-24 04:04:21",Admin,admin,"reannounced winner",fight,7,"winner: wala",192.168.1.10
+108,"2026-05-24 04:14:40",Admin,admin,"reset fight counter",system,—,"message: Fight counter reset to 1. New session started., session_date: 2026-05-24, fights_in_previous_session: 2, total_fights_preserved: 8",192.168.1.10
+109,"2026-05-24 04:14:44",Admin,admin,"created fight",fight,9,"fight_number: 1",192.168.1.10
+110,"2026-05-24 04:14:58",Admin,admin,"updated all side status",fight,9,"status: open",192.168.1.10
+111,"2026-05-24 04:15:07","Teller 1",teller,"placed bet",bet,37,"side: meron, amount: 5000.00",192.168.1.23
+112,"2026-05-24 04:15:16","Teller 1",teller,"placed bet",bet,38,"side: wala, amount: 5000.00",192.168.1.23
+113,"2026-05-24 04:15:25",Admin,admin,"finalized bet",fight,9,,192.168.1.10
+114,"2026-05-24 04:15:25",Admin,admin,"updated all side status",fight,9,"status: closed",192.168.1.10
+115,"2026-05-24 04:15:30",Admin,admin,"declared winner",fight,9,"winner: wala",192.168.1.10
+116,"2026-05-24 04:15:42",Admin,admin,"created fight",fight,10,"fight_number: 2",192.168.1.10
+117,"2026-05-24 04:15:51",Admin,admin,"reannounced winner",fight,9,"winner: meron",192.168.1.10
+118,"2026-05-24 04:22:25",Admin,admin,"updated all side status",fight,10,"status: open",192.168.1.10
+119,"2026-05-24 04:22:29",Admin,admin,"updated all side status",fight,10,"status: closed",192.168.1.10
+120,"2026-05-24 04:22:43",Admin,admin,"reannounced winner",fight,9,"winner: wala",192.168.1.10
+121,"2026-05-24 04:22:57",Admin,admin,"updated all side status",fight,10,"status: open",192.168.1.10
+122,"2026-05-24 04:23:05",Admin,admin,"updated all side status",fight,10,"status: closed",192.168.1.10
+123,"2026-05-24 04:23:07",Admin,admin,"updated all side status",fight,10,"status: open",192.168.1.10
+124,"2026-05-24 04:23:19",Admin,admin,"reannounced winner",fight,9,"winner: meron",192.168.1.10
+125,"2026-05-24 04:24:57",Admin,admin,"updated all side status",fight,10,"status: closed",192.168.1.10
+126,"2026-05-24 04:25:08",Admin,admin,"reannounced winner",fight,9,"winner: wala",192.168.1.10
+127,"2026-05-24 04:25:18",Admin,admin,"updated all side status",fight,10,"status: open",192.168.1.10
+128,"2026-05-24 04:25:32",Admin,admin,"reannounced winner",fight,9,"winner: meron",192.168.1.10
+129,"2026-05-24 04:27:21",Admin,admin,"reannounced winner",fight,9,"winner: wala",192.168.1.10
+130,"2026-05-24 04:47:06","Teller 1",teller,"paid payout",bet,38,"reference: FJP-322089, net_payout: 9500.00",192.168.1.10
+131,"2026-05-24 04:47:11","Teller 1",teller,"paid payout",bet,35,"reference: GQW-220518, net_payout: 9500.00",192.168.1.10
+132,"2026-05-24 04:47:16","Teller 1",teller,"paid payout",bet,33,"reference: ETD-181619, net_payout: 9500.00",192.168.1.10
+133,"2026-05-24 04:47:21","Teller 1",teller,"paid payout",bet,32,"reference: 1HD-192651, net_payout: 950.00",192.168.1.10
+134,"2026-05-24 04:54:59",Admin,admin,"updated all side status",fight,10,"status: closed",192.168.1.10
+135,"2026-05-24 04:54:59",Admin,admin,"finalized bet",fight,10,,192.168.1.10
+136,"2026-05-24 04:55:12",Admin,admin,"finalized bet",fight,10,,192.168.1.10
+137,"2026-05-24 04:55:14",Admin,admin,"declared winner",fight,10,"winner: wala",192.168.1.10
+138,"2026-05-24 04:55:19",Admin,admin,"created fight",fight,11,"fight_number: 3",192.168.1.10
+139,"2026-05-24 04:55:26",Admin,admin,"updated all side status",fight,11,"status: open",192.168.1.10
+140,"2026-05-24 04:55:42","Teller 1",teller,"placed bet",bet,39,"side: meron, amount: 5000.00",192.168.1.23
+141,"2026-05-24 04:55:48","Teller 1",teller,"placed bet",bet,40,"side: wala, amount: 5000.00",192.168.1.23
+142,"2026-05-24 04:55:59",Admin,admin,"finalized bet",fight,11,,192.168.1.10
+143,"2026-05-24 04:55:59",Admin,admin,"updated all side status",fight,11,"status: closed",192.168.1.10
+144,"2026-05-24 04:56:02",Admin,admin,"declared winner",fight,11,"winner: meron",192.168.1.10
+145,"2026-05-24 04:57:42","Teller 1",teller,"paid payout",bet,39,"reference: EKA-636103, net_payout: 9500.00",192.168.1.10
+146,"2026-05-24 19:39:18",Admin,admin,"created fight",fight,12,"fight_number: 4",192.168.1.10
+147,"2026-05-24 19:39:26",Admin,admin,"updated all side status",fight,12,"status: open",192.168.1.10
+148,"2026-05-24 19:39:54","Teller 1",teller,"placed bet",bet,41,"side: meron, amount: 5000.00",192.168.1.23
+149,"2026-05-24 19:40:10","Teller 1",teller,"placed bet",bet,42,"side: wala, amount: 5000.00",192.168.1.23

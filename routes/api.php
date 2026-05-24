@@ -162,4 +162,3 @@ Route::get('/runners/available', [\App\Http\Controllers\Owner\NotificationContro
 |--------------------------------------------------------------------------
 */
 Route::post('/test/broadcast-notification', [TestBroadcastController::class, 'testNotification']);
-Route::get('/test/broadcast-teller-cash', [TestBroadcastController::class, 'testTellerCashBroadcast']);

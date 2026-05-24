@@ -16,6 +16,12 @@
             </svg>
             Financial Overview
         </a>
+        <button id="eod-btn" class="text-green-600 dark:text-green-400 hover:underline text-sm font-medium flex items-center gap-2 px-4 py-2 rounded-lg bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors" onclick="generateEodReport()">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+            EOD Report
+        </button>
         <span id="ws-status" class="text-xs px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 font-medium flex items-center gap-2">
             <span class="inline-block w-2 h-2 bg-gray-400 rounded-full"></span>
             Connecting...
@@ -284,6 +290,23 @@ document.addEventListener('DOMContentLoaded', function () {
                 refreshDashboardData();
             });
 
+        // ── Cash Transaction Listener ──────────────────
+        window.Echo.channel('cash-status')
+            .listen('teller.cash-updated', (data) => {
+                if (data.type === 'cash_in') {
+                    addFeedItem(
+                        `💵 <span class="font-medium">${data.teller_name}</span> received <span class="font-bold text-green-600 dark:text-green-400">₱${formatCurrency(parseFloat(data.amount))}</span> from runner`,
+                        'text-green-600 dark:text-green-400'
+                    );
+                } else if (data.type === 'cash_out') {
+                    addFeedItem(
+                        `💸 Runner collected <span class="font-bold text-orange-600 dark:text-orange-400">₱${formatCurrency(parseFloat(data.amount))}</span> from <span class="font-medium">${data.teller_name}</span>`,
+                        'text-orange-600 dark:text-orange-400'
+                    );
+                }
+                refreshDashboardData();
+            });
+
         // ── Refresh Dashboard Data ────────────────────
         function refreshDashboardData() {
             fetch('/owner/stats')
@@ -360,6 +383,72 @@ document.addEventListener('DOMContentLoaded', function () {
 
     }); // end waitForEcho
 });
+
+// EOD Report Generation and Download
+async function generateEodReport() {
+    const btn = document.getElementById('eod-btn');
+    const originalText = btn.innerHTML;
+    
+    try {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="inline-block animate-spin">⟳</span> Generating...';
+        
+        // Generate the report
+        const response = await fetch('{{ route("owner.eod-report.generate") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (!data.success) {
+            throw new Error(data.message || 'Failed to generate EOD report');
+        }
+        
+        // Get today's date
+        const today = new Date().toISOString().split('T')[0];
+        const files = [
+            `audit-logs-eod-${today}.csv`,
+            `fights-eod-${today}.csv`,
+            `transactions-eod-${today}.csv`,
+            `summary-eod-${today}.txt`
+        ];
+        
+        btn.innerHTML = '📥 Downloading...';
+        
+        // Download each file
+        for (const file of files) {
+            const downloadUrl = '{{ route("owner.eod-report.download", ":filename") }}'.replace(':filename', file);
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.download = file;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Small delay between downloads
+            await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        
+        btn.innerHTML = '✓ Complete';
+        setTimeout(() => {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }, 2000);
+        
+    } catch (error) {
+        console.error('EOD Report Error:', error);
+        btn.innerHTML = '✗ Error';
+        btn.title = error.message;
+        setTimeout(() => {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }, 2000);
+    }
+}
 </script>
 @endpush
 

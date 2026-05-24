@@ -152,4 +152,33 @@ class ExportController extends Controller
 
         return response()->stream($callback, 200, $headers);
     }
+
+    public function generateEodReport(Request $request)
+    {
+        try {
+            // Run the EOD report command
+            \Artisan::call('eod:report');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'EOD report generated successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error generating EOD report: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function downloadEodReport($filename)
+    {
+        $filepath = storage_path('eod-reports/' . $filename);
+
+        if (!file_exists($filepath)) {
+            abort(404, 'File not found');
+        }
+
+        return response()->download($filepath);
+    }
 }
