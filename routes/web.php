@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\DisplayController;
 use App\Http\Controllers\Owner\AuditLogController;
 use App\Http\Controllers\Owner\DashboardController;
+use App\Http\Controllers\Owner\FinancialController;
 use App\Http\Controllers\Owner\FightController;
 use App\Http\Controllers\Owner\UserController;
 use App\Http\Controllers\Owner\SettingsController;
@@ -63,6 +64,10 @@ Route::middleware(['auth', 'role:owner'])
         // dashboard
         Route::get('/dashboard', [DashboardController::class, 'index'])
             ->name('dashboard');
+
+        // financial overview
+        Route::get('/financial-overview', [FinancialController::class, 'overview'])
+            ->name('financial-overview');
 
         // users
         Route::resource('users', UserController::class)

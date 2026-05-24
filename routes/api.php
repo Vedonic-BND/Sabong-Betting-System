@@ -130,6 +130,15 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     /*
     |----------------------------------------------------------------------
+    | OWNER only
+    |----------------------------------------------------------------------
+    */
+    Route::middleware('role:owner')->group(function () {
+        Route::get('/owner/teller/{id}/cash-status', [PayoutController::class, 'getOwnerTellerCashStatus']);
+    });
+
+    /*
+    |----------------------------------------------------------------------
     | DEBUG/TEST endpoints
     |----------------------------------------------------------------------
     */

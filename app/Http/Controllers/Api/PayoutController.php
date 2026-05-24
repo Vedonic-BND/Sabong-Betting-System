@@ -6,6 +6,7 @@ use App\Events\TellerCashStatusUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\Bet;
 use App\Models\TellerCash;
+use App\Models\CashRequest;
 use App\Services\AuditLogger;
 use Illuminate\Http\Request;
 
@@ -107,8 +108,13 @@ class PayoutController extends Controller
     {
         $user = $request->user();
 
-        // Get or update teller cash
-        $tellerCash = TellerCash::updateTellerCash($user->id);
+        // Just READ the teller cash - don't update it
+        // This prevents unnecessary database writes and observer broadcasts
+        $tellerCash = TellerCash::where('teller_id', $user->id)->first();
+
+        if (!$tellerCash) {
+            return response()->json(['error' => 'Teller cash data not found'], 404);
+        }
 
         return response()->json([
             'teller_id' => $user->id,
@@ -147,5 +153,46 @@ class PayoutController extends Controller
             });
 
         return response()->json($transactions);
+    }
+
+    // GET /api/owner/teller/{id}/cash-status
+    public function getOwnerTellerCashStatus(Request $request, int $tellerId)
+    {
+        // Just fetch the existing teller cash - don't update it
+        $tellerCash = TellerCash::where('teller_id', $tellerId)->first();
+
+        if (!$tellerCash) {
+            return response()->json(['error' => 'Teller cash data not found'], 404);
+        }
+
+        // Calculate provided and collected from runner transactions
+        $cashProvided = CashRequest::where('teller_id', $tellerId)
+            ->where('type', 'cash_in')
+            ->where('status', 'completed')
+            ->sum('amount');
+
+        $cashCollected = CashRequest::where('teller_id', $tellerId)
+            ->where('type', 'cash_out')
+            ->where('status', 'completed')
+            ->sum('amount');
+
+        // Calculate only bets received (Bet In)
+        $betInAmount = Bet::where('teller_id', $tellerId)->sum('amount');
+
+        // Calculate only payouts paid (Payout)
+        $payoutAmount = Payout::join('bets', 'payouts.bet_id', '=', 'bets.id')
+            ->where('bets.teller_id', $tellerId)
+            ->where('payouts.status', 'paid')
+            ->sum('payouts.net_payout');
+
+        return response()->json([
+            'teller_id' => $tellerId,
+            'total_cash_in' => (float)$betInAmount,
+            'total_paid_out' => (float)$payoutAmount,
+            'cash_provided' => (float)$cashProvided,
+            'cash_collected' => (float)$cashCollected,
+            'on_hand_cash' => (float)$tellerCash->on_hand_cash,
+            'last_updated' => $tellerCash->last_updated->format('Y-m-d H:i:s'),
+        ]);
     }
 }

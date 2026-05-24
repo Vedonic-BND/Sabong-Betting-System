@@ -76,15 +76,28 @@ class TellerCash extends Model
             // On-hand cash = Total In - Total Out
             $onHandCash = max(0, $totalCashIn - $totalCashOut);
 
-            $tellerCash = self::updateOrCreate(
-                ['teller_id' => $tellerId],
-                [
+            // Get or create the teller cash record
+            $tellerCash = self::firstOrCreate(['teller_id' => $tellerId]);
+
+            // Check if actual data changed (ignore timestamps)
+            $dataChanged = (
+                $tellerCash->total_cash_in != $totalCashIn ||
+                $tellerCash->total_paid_out != $totalCashOut ||
+                $tellerCash->on_hand_cash != $onHandCash
+            );
+
+            // Only update if data actually changed
+            if ($dataChanged) {
+                \Log::info('✅ TellerCash data changed for teller ' . $tellerId . ' - Updating...');
+                $tellerCash->update([
                     'total_cash_in' => $totalCashIn,
                     'total_paid_out' => $totalCashOut,
                     'on_hand_cash' => $onHandCash,
                     'last_updated' => now(),
-                ]
-            );
+                ]);
+            } else {
+                \Log::info('ℹ️ TellerCash data unchanged for teller ' . $tellerId . ' - Skipping update');
+            }
 
             return $tellerCash;
         } catch (\Exception $e) {
