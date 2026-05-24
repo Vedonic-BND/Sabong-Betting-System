@@ -259,19 +259,35 @@
 @push('scripts')
 <script>
 // ── Real-Time Updates via WebSocket ────────────────────────
-// Now that we fixed the observer to only broadcast real changes,
-// we can rely purely on WebSocket events for updates
+// Preferred: WebSocket provides immediate updates on data changes
+// Fallback: 30-second auto-reload if WebSocket unavailable
+
+let webSocketConnected = false;
 
 if (typeof window.Echo !== 'undefined') {
-    console.log('✅ [Financial Overview] WebSocket listener enabled for real-time updates');
+    console.log('✅ [Financial Overview] Echo available, attempting WebSocket connection...');
+    
     window.Echo.channel('cash-status')
         .listen('teller.cash-updated', (event) => {
             console.log('🔔 [Financial Overview] Real-time update received:', event);
             location.reload();
         });
+    
+    webSocketConnected = true;
+    console.log('✅ [Financial Overview] WebSocket listener active');
 } else {
-    console.warn('⚠️ [Financial Overview] WebSocket not available - page will not auto-update');
-    console.warn('⚠️ Please ensure Laravel Reverb/Broadcasting is configured');
+    console.warn('⚠️ [Financial Overview] Echo not available');
+}
+
+// Fallback: Auto-reload every 30 seconds if WebSocket not working
+// This ensures page updates even if Reverb server is down
+if (!webSocketConnected) {
+    console.log('⏱️ [Financial Overview] WebSocket unavailable - enabling 30-second auto-reload fallback');
+    
+    setInterval(() => {
+        console.log('🔄 [Financial Overview] Auto-reloading page (fallback)...');
+        location.reload();
+    }, 30000);
 }
 </script>
 
