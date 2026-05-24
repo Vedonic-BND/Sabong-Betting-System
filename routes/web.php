@@ -52,6 +52,16 @@ Route::post('/manage/logout', [AuthenticatedSessionController::class, 'destroy']
 
 /*
 |--------------------------------------------------------------------------
+| TEST BROADCAST
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/test-broadcast', [\App\Http\Controllers\TestBroadcastController::class, 'test'])
+    ->middleware('auth')
+    ->name('test.broadcast');
+
+/*
+|--------------------------------------------------------------------------
 | OWNER PANEL
 |--------------------------------------------------------------------------
 */

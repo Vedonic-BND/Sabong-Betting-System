@@ -275,14 +275,19 @@ setTimeout(() => {
         try {
             console.log('✅ [Financial Overview] Echo available, attempting WebSocket connection...');
             
-            window.Echo.channel('cash-status')
+            // Set up the listener
+            const listener = window.Echo.channel('cash-status')
                 .listen('teller.cash-updated', (event) => {
-                    console.log('🔔 [Financial Overview] Real-time update received:', event);
+                    console.log('🔔 [Financial Overview] RECEIVED EVENT from WebSocket:', event);
+                    console.log('🔔 [Financial Overview] Event timestamp:', new Date().toLocaleTimeString());
                     location.reload();
                 });
             
+            console.log('📍 [Financial Overview] Listener setup object:', listener);
             webSocketConnected = true;
             console.log('✅ [Financial Overview] WebSocket listener active and ready');
+            console.log('🎯 [Financial Overview] Waiting for events on channel: cash-status');
+            console.log('🎯 [Financial Overview] Listening for event name: teller.cash-updated');
         } catch (error) {
             console.error('❌ [Financial Overview] Error setting up WebSocket listener:', error);
             console.error('Error details:', error.message);
