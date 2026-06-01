@@ -33,6 +33,9 @@
 
         .meron-side { background: linear-gradient(135deg, #1a0000, #2d0000); border: 1px solid rgba(239,68,68,0.3); }
         .wala-side  { background: linear-gradient(135deg, #00001a, #00002d); border: 1px solid rgba(59,130,246,0.3); }
+
+        .meron-side.closed { background: linear-gradient(135deg, #1a1a1a, #2d2d2d); border: 1px solid rgba(107,114,128,0.3); }
+        .wala-side.closed  { background: linear-gradient(135deg, #1a1a1a, #2d2d2d); border: 1px solid rgba(107,114,128,0.3); }
     </style>
 </head>
 <body class="min-h-screen flex flex-col text-white">
@@ -72,8 +75,18 @@
         <div id="winner-overlay" class="hidden w-full max-w-6xl">
             <div class="rounded-2xl p-16 text-center border min-h-96" id="winner-card">
                 <p id="winner-label" class="text-gray-400 text-5xl uppercase tracking-widest mb-4">Winner</p>
-                <p id="winner-text" class="text-[10rem] leading-[1.2] font-black uppercase tracking-wider mb-4 break-words"></p>
-                <p id="fight-closed-text" class="text-gray-400 text-5xl">Fight closed</p>
+                <p id="winner-text" class="text-[10rem] leading-[1.2] font-black uppercase tracking-wider mb-8 break-words"></p>
+                <div id="winner-details" class="mb-8 space-y-4" style="display: none;">
+                    <div>
+                        <p id="winner-pool" class="text-gray-300 text-5xl font-bold"></p>
+                        <p id="winner-pool-label" class="text-gray-500 text-xl">Total Payout Pool</p>
+                    </div>
+                    <div>
+                        <p id="winner-payout-percentage" class="text-gray-300 text-5xl font-bold"></p>
+                        <p id="winner-payout-label" class="text-gray-500 text-xl">Payout Percentage</p>
+                    </div>
+                </div>
+                <p id="fight-closed-text" class="text-gray-400 text-4xl">Fight closed</p>
             </div>
         </div>
 
@@ -148,13 +161,18 @@
             });
         }
 
-        function showWinner(winner, fightNumber) {
+        function showWinner(winner, fightNumber, meronTotal = 0, walaTotal = 0) {
             const overlay  = document.getElementById('winner-overlay');
             const panel    = document.getElementById('betting-panel');
             const card     = document.getElementById('winner-card');
             const text     = document.getElementById('winner-text');
             const label    = document.getElementById('winner-label');
             const closedText = document.getElementById('fight-closed-text');
+            const poolEl   = document.getElementById('winner-pool');
+            const payoutEl = document.getElementById('winner-payout-percentage');
+            const detailsEl = document.getElementById('winner-details');
+            const poolLabelEl = document.getElementById('winner-pool-label');
+            const payoutLabelEl = document.getElementById('winner-payout-label');
 
             panel.classList.add('hidden');
             overlay.classList.remove('hidden');
@@ -163,22 +181,44 @@
             const isMeron = winner === 'meron';
             const isDraw  = winner === 'draw';
             const isWala  = winner === 'wala';
+            const isCancelled = winner === 'cancelled';
 
             text.textContent = winner.toUpperCase();
 
+            // Only show payout details for meron/wala wins
+            if (isMeron || isWala) {
+                // Calculate payout info
+                const totalPool = parseFloat(meronTotal) + parseFloat(walaTotal);
+                const netPool = totalPool * 0.95;
+                let winnerTotal = isMeron ? parseFloat(meronTotal) : parseFloat(walaTotal);
+                let payoutPercentage = winnerTotal > 0 ? (netPool / winnerTotal * 100) : 100;
+
+                // Display pool and payout
+                if (totalPool > 0) {
+                    poolEl.textContent = formatMoney(netPool);
+                    payoutEl.textContent = payoutPercentage.toFixed(2) + '%';
+                    detailsEl.style.display = 'block';
+                } else {
+                    detailsEl.style.display = 'none';
+                }
+            } else {
+                // Hide payout details for draw/cancelled
+                detailsEl.style.display = 'none';
+            }
+
             if (isMeron) {
                 card.className = 'rounded-2xl p-16 text-center border border-red-500 bg-red-950/60';
-                text.className = 'text-[10rem] leading-[1.2] font-black uppercase tracking-wider mb-4 text-red-400';
+                text.className = 'text-[10rem] leading-[1.2] font-black uppercase tracking-wider mb-8 text-red-400';
             } else if (isWala) {
                 card.className = 'rounded-2xl p-16 text-center border border-blue-500 bg-blue-950/60';
-                text.className = 'text-[10rem] leading-[1.2] font-black uppercase tracking-wider mb-4 text-blue-400';
-            } else if (!isDraw) {
-                card.className = 'rounded-2xl p-16 text-center border border-blue-500 bg-blue-950/60';
-                text.className = 'text-[10rem] leading-[1.2] font-black uppercase tracking-wider mb-4 text-blue-400';
+                text.className = 'text-[10rem] leading-[1.2] font-black uppercase tracking-wider mb-8 text-blue-400';
+            } else if (isDraw) {
+                card.className = 'rounded-2xl p-16 text-center border border-yellow-500 bg-yellow-950/60';
+                text.className = 'text-[10rem] leading-[1.2] font-black uppercase tracking-wider mb-8 text-yellow-400';
                 closedText.classList.add('hidden');
-            } else {
+            } else if (isCancelled) {
                 card.className = 'rounded-2xl p-16 text-center border border-gray-500 bg-gray-900';
-                text.className = 'text-[10rem] leading-[1.2] font-black uppercase tracking-wider mb-2  text-gray-400';
+                text.className = 'text-[10rem] leading-[1.2] font-black uppercase tracking-wider mb-8 text-gray-400';
                 closedText.classList.add('hidden');
             }
         }
@@ -282,9 +322,9 @@ document.addEventListener('DOMContentLoaded', function () {
                         const wala    = parseFloat(data.wala_total);
 
                         document.getElementById('meron-multiplier').textContent =
-                            meron > 0 ? (netPool / meron * 100).toFixed(2) + '%' : '—';
+                            meron > 0 ? (netPool / meron * 100).toFixed(2) + '%' : '100.00%';
                         document.getElementById('wala-multiplier').textContent =
-                            wala > 0 ? (netPool / wala * 100).toFixed(2) + '%' : '—';
+                            wala > 0 ? (netPool / wala * 100).toFixed(2) + '%' : '100.00%';
                     }
                 }
             })
@@ -299,9 +339,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.getElementById('wala-total').textContent  = formatMoney(walaTotal);
 
                 document.getElementById('meron-multiplier').textContent =
-                    meronTotal > 0 ? (netPool / meronTotal * 100).toFixed(2) + '%' : '—';
+                    meronTotal > 0 ? (netPool / meronTotal * 100).toFixed(2) + '%' : '100.00%';
                 document.getElementById('wala-multiplier').textContent =
-                    walaTotal > 0 ? (netPool / walaTotal * 100).toFixed(2) + '%' : '—';
+                    walaTotal > 0 ? (netPool / walaTotal * 100).toFixed(2) + '%' : '100.00%';
             })
             .listen('.bet.deleted', (data) => {
                 console.log('🗑️ BET.DELETED EVENT RECEIVED:', data);
@@ -315,9 +355,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.getElementById('wala-total').textContent  = formatMoney(walaTotal);
 
                 document.getElementById('meron-multiplier').textContent =
-                    meronTotal > 0 ? (netPool / meronTotal * 100).toFixed(2) + '%' : '—';
+                    meronTotal > 0 ? (netPool / meronTotal * 100).toFixed(2) + '%' : '100.00%';
                 document.getElementById('wala-multiplier').textContent =
-                    walaTotal > 0 ? (netPool / walaTotal * 100).toFixed(2) + '%' : '—';
+                    walaTotal > 0 ? (netPool / walaTotal * 100).toFixed(2) + '%' : '100.00%';
                 console.log('🗑️ UI Updated');
             })
             .listen('.winner.declared', (data) => {
@@ -334,12 +374,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     // Show the reannounced fight
                     document.getElementById('fight-number').textContent = 'Fight #' + data.fight_number;
                     updateStatus('done'); // Reannounced fights are always done
-                    showWinner(data.winner, data.fight_number);
+                    showWinner(data.winner, data.fight_number, data.meron_total, data.wala_total);
 
                     // Clear any previous timeout
                     if (announcementTimeout) clearTimeout(announcementTimeout);
 
-                    // Return to current fight after 8 seconds
+                    // Return to current fight after 20 seconds
                     announcementTimeout = setTimeout(() => {
                         console.log('⏱️ Announcement timeout. Returning to current fight #' + currentActiveFightNumber + ' (status: ' + currentActiveFightStatus + ')');
                         document.getElementById('winner-overlay').classList.remove('announcement-active');
@@ -347,12 +387,12 @@ document.addEventListener('DOMContentLoaded', function () {
                         document.getElementById('betting-panel').classList.remove('hidden');
                         document.getElementById('fight-number').textContent = 'Fight #' + currentActiveFightNumber;
                         updateStatus(currentActiveFightStatus); // Use the actual current fight status
-                    }, 8000);
+                    }, 20000);
                 } else {
                     // This is the current active fight - declare winner normally
                     console.log('🏁 Current fight winner declared');
                     updateStatus('done');
-                    showWinner(data.winner, data.fight_number);
+                    showWinner(data.winner, data.fight_number, data.meron_total, data.wala_total);
                 }
             });
 
@@ -363,21 +403,21 @@ document.addEventListener('DOMContentLoaded', function () {
             const walaLabel = document.getElementById('wala-status-label');
 
             if (meron_status === 'closed') {
-                meronSide.classList.add('opacity-50');
+                meronSide.classList.add('opacity-50', 'closed');
                 meronSide.classList.remove('pulse-meron');
                 meronLabel.style.display = 'block';
             } else {
-                meronSide.classList.remove('opacity-50');
+                meronSide.classList.remove('opacity-50', 'closed');
                 meronSide.classList.add('pulse-meron');
                 meronLabel.style.display = 'none';
             }
 
             if (wala_status === 'closed') {
-                walaSide.classList.add('opacity-50');
+                walaSide.classList.add('opacity-50', 'closed');
                 walaSide.classList.remove('pulse-wala');
                 walaLabel.style.display = 'block';
             } else {
-                walaSide.classList.remove('opacity-50');
+                walaSide.classList.remove('opacity-50', 'closed');
                 walaSide.classList.add('pulse-wala');
                 walaLabel.style.display = 'none';
             }
